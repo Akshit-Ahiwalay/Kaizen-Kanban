@@ -1,12 +1,14 @@
 import { useState, useCallback } from "react";
 import LandingScreen from "@/components/LandingScreen";
 import BoardScene from "@/components/BoardScene";
-import { demoColumns } from "@/features/board/data";
+import type { Column } from "@/features/board/types";
+import { createInitialBoardColumns } from "@/features/board/data";
 
 type AppState = "landing" | "revealing" | "board";
 
 const Index = () => {
   const [state, setState] = useState<AppState>("landing");
+  const [boardColumns] = useState<Column[]>(createInitialBoardColumns);
 
   const handleEnter = useCallback(() => {
     setState("revealing");
@@ -20,7 +22,7 @@ const Index = () => {
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Board is always mounted underneath */}
       <div className="absolute inset-0 z-10">
-        <BoardScene columns={demoColumns} isActive={state !== "landing"} />
+        <BoardScene columns={boardColumns} isActive={state !== "landing"} />
       </div>
 
       {/* Landing screen sits on top, gets clipped away during reveal */}

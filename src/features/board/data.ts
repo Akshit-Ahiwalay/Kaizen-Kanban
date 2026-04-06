@@ -34,3 +34,9 @@ export const demoColumns: Column[] = [
     ],
   },
 ];
+
+export const createInitialBoardColumns = (): Column[] =>
+  demoColumns.map((column) => ({
+    ...column,
+    cards: column.cards.map((card) => ({ ...card })),
+  }));
