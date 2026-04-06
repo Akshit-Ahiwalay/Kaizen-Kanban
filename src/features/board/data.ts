@@ -1,4 +1,17 @@
-import type { Column } from "./types";
+import type { BoardColumnId, Column } from "./types";
+
+export const BOARD_COLUMNS: ReadonlyArray<{ id: BoardColumnId; title: string }> = [
+  { id: "todo", title: "To Do" },
+  { id: "in-progress", title: "In Progress" },
+  { id: "in-review", title: "In Review" },
+  { id: "done", title: "Done" },
+];
+
+export const createEmptyBoardColumns = (): Column[] =>
+  BOARD_COLUMNS.map((column) => ({
+    ...column,
+    cards: [],
+  }));
 
 export const demoColumns: Column[] = [
   {

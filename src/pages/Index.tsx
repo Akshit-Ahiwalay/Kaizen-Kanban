@@ -1,15 +1,32 @@
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import LandingScreen from "@/components/LandingScreen";
 import BoardScene from "@/components/BoardScene";
 import type { Column, CreateTaskInput, MoveTaskInput } from "@/features/board/types";
-import { createInitialBoardColumns } from "@/features/board/data";
-import { createTaskInTodoColumn, moveTask } from "@/features/board/mutations";
+import { createEmptyBoardColumns, createInitialBoardColumns } from "@/features/board/data";
+import { createTaskCard, insertTaskIntoColumn, moveTask } from "@/features/board/mutations";
+import {
+  createTaskForUser,
+  fetchBoardColumnsForUser,
+  moveTaskForUser,
+} from "@/features/board/persistence";
+import { ensureAnonymousSession } from "@/integrations/supabase/auth";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 
 type AppState = "landing" | "revealing" | "board";
 
+const shouldUseSupabase = isSupabaseConfigured && import.meta.env.MODE !== "test";
+
 const Index = () => {
   const [state, setState] = useState<AppState>("landing");
-  const [boardColumns, setBoardColumns] = useState<Column[]>(createInitialBoardColumns);
+  const [boardColumns, setBoardColumns] = useState<Column[]>(
+    shouldUseSupabase ? createEmptyBoardColumns : createInitialBoardColumns,
+  );
+  const [session, setSession] = useState<Session | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(shouldUseSupabase);
+  const [isBoardLoading, setIsBoardLoading] = useState(shouldUseSupabase);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const handleEnter = useCallback(() => {
     setState("revealing");
@@ -19,13 +36,182 @@ const Index = () => {
     setState("board");
   }, []);
 
-  const handleCreateTask = useCallback((task: CreateTaskInput) => {
-    setBoardColumns((currentColumns) => createTaskInTodoColumn(currentColumns, task));
+  const handleCreateTask = useCallback(
+    (task: CreateTaskInput) => {
+      const newTask = createTaskCard(task);
+      let previousColumns: Column[] | null = null;
+
+      setBoardColumns((currentColumns) => {
+        previousColumns = currentColumns;
+        return insertTaskIntoColumn(currentColumns, newTask, "todo");
+      });
+
+      if (!shouldUseSupabase || !userId) {
+        return;
+      }
+
+      void (async () => {
+        try {
+          await createTaskForUser(userId, newTask);
+          setSyncError(null);
+        } catch {
+          if (previousColumns) {
+            setBoardColumns(previousColumns);
+          }
+          setSyncError("Save issue");
+        }
+      })();
+    },
+    [userId],
+  );
+
+  const handleMoveTask = useCallback(
+    (taskMove: MoveTaskInput) => {
+      let previousColumns: Column[] | null = null;
+      let changed = false;
+
+      setBoardColumns((currentColumns) => {
+        const nextColumns = moveTask(currentColumns, taskMove);
+        previousColumns = currentColumns;
+        changed = nextColumns !== currentColumns;
+        return nextColumns;
+      });
+
+      if (!changed || !shouldUseSupabase || !userId) {
+        return;
+      }
+
+      void (async () => {
+        try {
+          await moveTaskForUser(userId, taskMove.taskId, taskMove.targetColumnId);
+          setSyncError(null);
+        } catch {
+          if (previousColumns) {
+            setBoardColumns(previousColumns);
+          }
+          setSyncError("Move issue");
+        }
+      })();
+    },
+    [userId],
+  );
+
+  useEffect(() => {
+    if (!shouldUseSupabase || !supabase) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const syncSession = async () => {
+      try {
+        const activeSession = await ensureAnonymousSession();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSession(activeSession);
+        setUserId(activeSession?.user.id ?? null);
+        setSyncError(null);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setSyncError("Guest auth unavailable");
+        setIsBoardLoading(false);
+      } finally {
+        if (isMounted) {
+          setIsAuthLoading(false);
+        }
+      }
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, nextSession: Session | null) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setSession(nextSession);
+        setUserId(nextSession?.user.id ?? null);
+      },
+    );
+
+    void syncSession();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const handleMoveTask = useCallback((taskMove: MoveTaskInput) => {
-    setBoardColumns((currentColumns) => moveTask(currentColumns, taskMove));
-  }, []);
+  useEffect(() => {
+    if (!shouldUseSupabase) {
+      return;
+    }
+
+    if (!userId) {
+      if (!isAuthLoading) {
+        setBoardColumns(createEmptyBoardColumns());
+        setIsBoardLoading(false);
+      }
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadBoard = async () => {
+      setIsBoardLoading(true);
+
+      try {
+        const columns = await fetchBoardColumnsForUser(userId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setBoardColumns(columns);
+        setSyncError(null);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setSyncError("Sync unavailable");
+        setBoardColumns(createEmptyBoardColumns());
+      } finally {
+        if (isMounted) {
+          setIsBoardLoading(false);
+        }
+      }
+    };
+
+    void loadBoard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthLoading, userId]);
+
+  const boardStatusText = useMemo(() => {
+    if (syncError) {
+      return syncError;
+    }
+
+    if (isAuthLoading || isBoardLoading) {
+      return "Syncing";
+    }
+
+    if (session?.user?.is_anonymous) {
+      return "Guest";
+    }
+
+    return null;
+  }, [isAuthLoading, isBoardLoading, session?.user?.is_anonymous, syncError]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -36,6 +222,8 @@ const Index = () => {
           isActive={state !== "landing"}
           onCreateTask={handleCreateTask}
           onMoveTask={handleMoveTask}
+          statusText={boardStatusText}
+          canCreateTask={!shouldUseSupabase || !!userId}
         />
       </div>
 

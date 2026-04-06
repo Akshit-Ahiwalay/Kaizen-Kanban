@@ -5,6 +5,7 @@ interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateTask: (task: CreateTaskInput) => void;
+  submitLabel?: string;
 }
 
 interface TaskDraft {
@@ -21,7 +22,12 @@ const initialDraft: TaskDraft = {
   dueDate: "",
 };
 
-const CreateTaskDialog = ({ open, onOpenChange, onCreateTask }: CreateTaskDialogProps) => {
+const CreateTaskDialog = ({
+  open,
+  onOpenChange,
+  onCreateTask,
+  submitLabel = "Add To Do",
+}: CreateTaskDialogProps) => {
   const [draft, setDraft] = useState<TaskDraft>(initialDraft);
   const [titleError, setTitleError] = useState("");
 
@@ -182,7 +188,7 @@ const CreateTaskDialog = ({ open, onOpenChange, onCreateTask }: CreateTaskDialog
               type="submit"
               className="border border-border/30 px-4 py-2 text-[10px] font-body uppercase tracking-[0.2em] text-foreground/70 transition-all duration-300 hover:border-border/55 hover:text-foreground"
             >
-              Add To Do
+              {submitLabel}
             </button>
           </div>
         </form>

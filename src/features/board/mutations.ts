@@ -1,6 +1,6 @@
-import type { Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "./types";
+import type { BoardColumnId, Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "./types";
 
-const TODO_COLUMN_ID = "todo";
+const TODO_COLUMN_ID: BoardColumnId = "todo";
 
 const formatDueDate = (dueDate?: string) => {
   if (!dueDate) {
@@ -13,37 +13,50 @@ const formatDueDate = (dueDate?: string) => {
   }).format(new Date(`${dueDate}T00:00:00`));
 };
 
-const createTaskId = () =>
-  globalThis.crypto?.randomUUID?.() ??
-  `task-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const createFallbackUuid = () =>
+  "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = character === "x" ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
 
-const resolveTargetColumnId = (columns: Column[], preferredColumnId: string) =>
+const createTaskId = () =>
+  globalThis.crypto?.randomUUID?.() ?? createFallbackUuid();
+
+const resolveTargetColumnId = (columns: Column[], preferredColumnId: BoardColumnId) =>
   columns.find((column) => column.id === preferredColumnId)?.id ?? columns[0]?.id;
 
-const buildTask = (task: CreateTaskInput): KanbanCard => ({
+export const createTaskCard = (task: CreateTaskInput): KanbanCard => ({
   id: createTaskId(),
   title: task.title,
   description: task.description,
   priority: task.priority,
+  dueDateValue: task.dueDate,
   dueDate: formatDueDate(task.dueDate),
 });
 
-export const createTaskInTodoColumn = (
+export const insertTaskIntoColumn = (
   columns: Column[],
-  task: CreateTaskInput,
+  task: KanbanCard,
+  targetColumnId: BoardColumnId,
 ): Column[] => {
   if (columns.length === 0) {
     return columns;
   }
 
-  const targetColumnId = resolveTargetColumnId(columns, TODO_COLUMN_ID);
+  const resolvedColumnId = resolveTargetColumnId(columns, targetColumnId);
 
   return columns.map((column) =>
-    column.id === targetColumnId
-      ? { ...column, cards: [buildTask(task), ...column.cards] }
+    column.id === resolvedColumnId
+      ? { ...column, cards: [task, ...column.cards] }
       : column,
   );
 };
+
+export const createTaskInTodoColumn = (
+  columns: Column[],
+  task: CreateTaskInput,
+): Column[] => insertTaskIntoColumn(columns, createTaskCard(task), TODO_COLUMN_ID);
 
 const clampTargetIndex = (index: number | undefined, maxIndex: number) => {
   if (index === undefined) {

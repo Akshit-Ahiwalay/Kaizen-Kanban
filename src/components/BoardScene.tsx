@@ -22,9 +22,18 @@ interface BoardSceneProps {
   isActive: boolean;
   onCreateTask: (task: CreateTaskInput) => void;
   onMoveTask: (taskMove: MoveTaskInput) => void;
+  statusText?: string | null;
+  canCreateTask?: boolean;
 }
 
-const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneProps) => {
+const BoardScene = ({
+  columns,
+  isActive,
+  onCreateTask,
+  onMoveTask,
+  statusText = null,
+  canCreateTask = true,
+}: BoardSceneProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [recentlyMovedTaskId, setRecentlyMovedTaskId] = useState<string | null>(null);
@@ -65,7 +74,7 @@ const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneP
     }
 
     const taskId = String(active.id);
-    const targetColumnId = String(over.id);
+    const targetColumnId = String(over.id) as MoveTaskInput["targetColumnId"];
 
     setRecentlyMovedTaskId(taskId);
     onMoveTask({ taskId, targetColumnId });
@@ -106,13 +115,19 @@ const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneP
             改善
           </span>
           <div className="flex items-center gap-3">
+            {statusText && (
+              <span className="text-[9px] font-body uppercase tracking-[0.18em] text-muted-foreground/40">
+                {statusText}
+              </span>
+            )}
             <button className="p-2 text-muted-foreground/40 hover:text-foreground transition-colors duration-300">
               <Search size={13} />
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-body tracking-[0.15em] uppercase text-foreground/50 hover:text-foreground border border-border/30 hover:border-border/50 transition-all duration-300"
+              className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-body tracking-[0.15em] uppercase text-foreground/50 hover:text-foreground border border-border/30 hover:border-border/50 transition-all duration-300 disabled:cursor-not-allowed disabled:border-border/15 disabled:text-muted-foreground/30"
               onClick={() => setIsCreateDialogOpen(true)}
+              disabled={!canCreateTask}
             >
               <Plus size={11} />
               <span>New Task</span>
@@ -151,6 +166,7 @@ const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneP
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onCreateTask={onCreateTask}
+        submitLabel="Add To Do"
       />
     </div>
   );

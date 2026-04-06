@@ -1,3 +1,5 @@
+export type BoardColumnId = "todo" | "in-progress" | "in-review" | "done";
+export type TaskStatus = "todo" | "in_progress" | "in_review" | "done";
 export type KanbanPriority = "low" | "normal" | "high";
 
 export interface KanbanCard {
@@ -5,12 +7,13 @@ export interface KanbanCard {
   title: string;
   description?: string;
   dueDate?: string;
+  dueDateValue?: string;
   priority?: KanbanPriority;
   done?: boolean;
 }
 
 export interface Column {
-  id: string;
+  id: BoardColumnId;
   title: string;
   cards: KanbanCard[];
 }
@@ -24,6 +27,6 @@ export interface CreateTaskInput {
 
 export interface MoveTaskInput {
   taskId: string;
-  targetColumnId: string;
+  targetColumnId: BoardColumnId;
   targetIndex?: number;
 }

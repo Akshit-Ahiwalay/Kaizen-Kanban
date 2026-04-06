@@ -1,0 +1,117 @@
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { createEmptyBoardColumns } from "./data";
+import type { BoardColumnId, Column, KanbanCard, TaskStatus } from "./types";
+
+type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
+type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
+
+const STATUS_TO_COLUMN_ID: Record<TaskStatus, BoardColumnId> = {
+  todo: "todo",
+  in_progress: "in-progress",
+  in_review: "in-review",
+  done: "done",
+};
+
+const COLUMN_ID_TO_STATUS: Record<BoardColumnId, TaskStatus> = {
+  todo: "todo",
+  "in-progress": "in_progress",
+  "in-review": "in_review",
+  done: "done",
+};
+
+const formatDueDateForCard = (dueDate: string | null) => {
+  if (!dueDate) {
+    return undefined;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${dueDate}T00:00:00`));
+};
+
+const mapTaskRowToCard = (row: TaskRow): KanbanCard => ({
+  id: row.id,
+  title: row.title,
+  description: row.description ?? undefined,
+  priority: row.priority ?? undefined,
+  dueDateValue: row.due_date ?? undefined,
+  dueDate: formatDueDateForCard(row.due_date),
+  done: row.status === "done",
+});
+
+const mapRowsToColumns = (rows: TaskRow[]): Column[] => {
+  const columns = createEmptyBoardColumns();
+  const columnsById = new Map(columns.map((column) => [column.id, column]));
+
+  rows.forEach((row) => {
+    const column = columnsById.get(STATUS_TO_COLUMN_ID[row.status]);
+
+    if (column) {
+      column.cards.push(mapTaskRowToCard(row));
+    }
+  });
+
+  return columns;
+};
+
+const buildTaskInsert = (task: KanbanCard, userId: string): TaskInsert => ({
+  id: task.id,
+  title: task.title,
+  description: task.description ?? null,
+  status: "todo",
+  priority: task.priority ?? null,
+  due_date: task.dueDateValue ?? null,
+  user_id: userId,
+});
+
+export const fetchBoardColumnsForUser = async (userId: string): Promise<Column[]> => {
+  if (!supabase) {
+    return createEmptyBoardColumns();
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("id, title, description, status, priority, due_date, user_id, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return mapRowsToColumns(data ?? []);
+};
+
+export const createTaskForUser = async (userId: string, task: KanbanCard) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase.from("tasks").insert(buildTaskInsert(task, userId));
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const moveTaskForUser = async (
+  userId: string,
+  taskId: string,
+  targetColumnId: BoardColumnId,
+) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status: COLUMN_ID_TO_STATUS[targetColumnId] })
+    .eq("id", taskId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+};
