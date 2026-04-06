@@ -1,11 +1,10 @@
 import { useState } from "react";
+import brushMaskSpriteUrl from "@/assets/brush-mask-sprite.png";
 
 interface EnterButtonProps {
   onClick: () => void;
 }
 
-const SPRITE_URL =
-  "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/urban-sprite.png";
 const STEPS = 29;
 
 const EnterButton = ({ onClick }: EnterButtonProps) => {
@@ -29,8 +28,8 @@ const EnterButton = ({ onClick }: EnterButtonProps) => {
         className="relative z-10 w-full h-full cursor-pointer border-none font-display text-xs tracking-[0.3em] text-primary-foreground"
         style={{
           background: "hsl(var(--foreground))",
-          WebkitMask: `url(${SPRITE_URL})`,
-          mask: `url(${SPRITE_URL})`,
+          WebkitMask: `url(${brushMaskSpriteUrl})`,
+          mask: `url(${brushMaskSpriteUrl})`,
           WebkitMaskSize: `${STEPS * 100 + 100}% 100%`,
           maskSize: `${STEPS * 100 + 100}% 100%`,
           animation: hovered
