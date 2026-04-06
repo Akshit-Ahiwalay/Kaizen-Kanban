@@ -7,9 +7,15 @@ interface DraggableTaskCardProps {
   card: KanbanCard;
   columnId: string;
   delay: number;
+  animateIn?: boolean;
 }
 
-const DraggableTaskCard = ({ card, columnId, delay }: DraggableTaskCardProps) => {
+const DraggableTaskCard = ({
+  card,
+  columnId,
+  delay,
+  animateIn = true,
+}: DraggableTaskCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useDraggable({
     id: card.id,
     data: {
@@ -31,7 +37,7 @@ const DraggableTaskCard = ({ card, columnId, delay }: DraggableTaskCardProps) =>
       {...listeners}
       {...attributes}
     >
-      <TaskCard card={card} delay={delay} />
+      <TaskCard card={card} delay={delay} animateIn={animateIn} />
     </div>
   );
 };

@@ -9,7 +9,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import type { Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "@/features/board/types";
 import BoardColumn from "./BoardColumn";
@@ -27,6 +27,7 @@ interface BoardSceneProps {
 const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [recentlyMovedTaskId, setRecentlyMovedTaskId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -39,6 +40,18 @@ const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneP
     activeTaskId === null
       ? null
       : columns.flatMap((column) => column.cards).find((card) => card.id === activeTaskId) ?? null;
+
+  useEffect(() => {
+    if (!recentlyMovedTaskId) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRecentlyMovedTaskId(null);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [recentlyMovedTaskId]);
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveTaskId(String(active.id));
@@ -54,6 +67,7 @@ const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneP
     const taskId = String(active.id);
     const targetColumnId = String(over.id);
 
+    setRecentlyMovedTaskId(taskId);
     onMoveTask({ taskId, targetColumnId });
   };
 
@@ -123,6 +137,7 @@ const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneP
               index={i}
               isLast={i === columns.length - 1}
               isActive={isActive}
+              recentlyMovedTaskId={recentlyMovedTaskId}
             />
           ))}
         </div>

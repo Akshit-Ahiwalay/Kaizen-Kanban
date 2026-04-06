@@ -8,9 +8,16 @@ interface BoardColumnProps {
   index: number;
   isLast: boolean;
   isActive: boolean;
+  recentlyMovedTaskId?: string | null;
 }
 
-const BoardColumn = ({ column, index, isLast, isActive }: BoardColumnProps) => {
+const BoardColumn = ({
+  column,
+  index,
+  isLast,
+  isActive,
+  recentlyMovedTaskId,
+}: BoardColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: column.id,
     data: {
@@ -55,6 +62,7 @@ const BoardColumn = ({ column, index, isLast, isActive }: BoardColumnProps) => {
               card={card}
               columnId={column.id}
               delay={0.5 + index * 0.1 + cardIndex * 0.06}
+              animateIn={card.id !== recentlyMovedTaskId}
             />
           ))}
       </div>
