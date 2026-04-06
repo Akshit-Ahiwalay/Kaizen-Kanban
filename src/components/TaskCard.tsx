@@ -8,7 +8,7 @@ interface TaskCardProps {
 
 const priorityColors: Record<string, string> = {
   high: "text-seal/70",
-  medium: "text-olive/70",
+  normal: "text-olive/70",
   low: "text-muted-foreground/50",
 };
 

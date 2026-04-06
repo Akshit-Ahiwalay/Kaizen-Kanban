@@ -1,15 +1,20 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Plus, Search } from "lucide-react";
-import type { Column } from "@/features/board/types";
+import type { Column, CreateTaskInput } from "@/features/board/types";
 import BoardColumn from "./BoardColumn";
+import CreateTaskDialog from "./CreateTaskDialog";
 import SamuraiSilhouette from "./SamuraiSilhouette";
 
 interface BoardSceneProps {
   columns: Column[];
   isActive: boolean;
+  onCreateTask: (task: CreateTaskInput) => void;
 }
 
-const BoardScene = ({ columns, isActive }: BoardSceneProps) => {
+const BoardScene = ({ columns, isActive, onCreateTask }: BoardSceneProps) => {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
   return (
     <div className="h-full w-full bg-background relative flex flex-col overflow-hidden">
       {/* Red sun */}
@@ -48,9 +53,13 @@ const BoardScene = ({ columns, isActive }: BoardSceneProps) => {
             <button className="p-2 text-muted-foreground/40 hover:text-foreground transition-colors duration-300">
               <Search size={13} />
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-body tracking-[0.15em] uppercase text-foreground/50 hover:text-foreground border border-border/30 hover:border-border/50 transition-all duration-300">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-body tracking-[0.15em] uppercase text-foreground/50 hover:text-foreground border border-border/30 hover:border-border/50 transition-all duration-300"
+              onClick={() => setIsCreateDialogOpen(true)}
+            >
               <Plus size={11} />
-              <span>New</span>
+              <span>New Task</span>
             </button>
           </div>
         </motion.div>
@@ -68,6 +77,12 @@ const BoardScene = ({ columns, isActive }: BoardSceneProps) => {
           />
         ))}
       </div>
+
+      <CreateTaskDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onCreateTask={onCreateTask}
+      />
     </div>
   );
 };
