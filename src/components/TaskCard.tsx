@@ -13,15 +13,15 @@ interface TaskCardProps {
 const priorityColors: Record<string, string> = {
   high: "text-seal/70",
   normal: "text-olive/70",
-  low: "text-muted-foreground/50",
+  low: "text-muted-foreground/56",
 };
 
 const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }: TaskCardProps) => {
   return (
     <motion.div
       className={cn(
-        "group relative bg-background/60 border border-border/15 px-4 py-3 cursor-pointer transition-all duration-300 hover:border-border/35",
-        elevated && "border-border/30 bg-background/95 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.45)]",
+        "group relative cursor-pointer border border-border/20 bg-background/60 px-4 py-3 transition-all duration-300 hover:border-border/40",
+        elevated && "border-border/34 bg-background/95 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.45)]",
         className,
       )}
       initial={animateIn ? { opacity: 0, y: 6 } : false}
@@ -33,12 +33,12 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
       }}
       whileHover={elevated ? undefined : { y: -1 }}
     >
-      <h3 className="font-body text-sm text-foreground/80 leading-relaxed">
+      <h3 className="font-body text-sm leading-relaxed text-foreground/86">
         {card.title}
       </h3>
 
       {card.description && (
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground/55">
+        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground/60">
           {card.description}
         </p>
       )}
@@ -53,7 +53,7 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
             </span>
           )}
           {card.dueDate && (
-            <span className="text-[9px] font-body text-muted-foreground/40 tracking-wide">
+            <span className="text-[9px] font-body tracking-wide text-muted-foreground/46">
               {card.dueDate}
             </span>
           )}

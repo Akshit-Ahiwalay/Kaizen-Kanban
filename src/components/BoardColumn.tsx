@@ -31,8 +31,8 @@ const BoardColumn = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[220px] flex flex-col px-5 lg:px-7 pt-4 pb-4 ${
-        !isLast ? "border-r border-border/15" : ""
+      className={`flex-1 min-w-[220px] flex flex-col px-4 pt-4 pb-4 sm:px-5 lg:px-7 ${
+        !isLast ? "border-r border-border/18" : ""
       } ${isOver ? "bg-background/25" : ""}`}
     >
       {/* Column header */}
@@ -43,17 +43,17 @@ const BoardColumn = ({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
         >
-          <h2 className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground/60">
+          <h2 className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground/68">
             {column.title}
           </h2>
-          <span className="text-[9px] font-body text-muted-foreground/25">
+          <span className="text-[9px] font-body text-muted-foreground/34">
             {column.cards.length}
           </span>
         </motion.div>
       )}
 
       {/* Thin separator */}
-      <div className={`h-px mb-4 transition-colors duration-200 ${isOver ? "bg-border/35" : "bg-border/20"}`} />
+      <div className={`mb-4 h-px transition-colors duration-200 ${isOver ? "bg-border/35" : "bg-border/24"}`} />
 
       {/* Cards */}
       <div className="flex flex-col gap-2.5 flex-1">
@@ -67,12 +67,12 @@ const BoardColumn = ({
         {isActive &&
           !isBoardLoading &&
           column.cards.length === 0 && (
-            <div className="mt-1 border border-dashed border-border/20 bg-background/20 px-4 py-4 text-center">
-              <p className="font-body text-xs text-muted-foreground/55">
-                {column.id === "todo" ? "No tasks yet." : "Drop tasks here."}
+            <div className="mt-1 border border-dashed border-border/24 bg-background/22 px-4 py-4 text-center">
+              <p className="font-body text-xs text-muted-foreground/60">
+                {column.id === "todo" ? "No tasks yet" : "Drop tasks here"}
               </p>
-              <p className="mt-1 font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/30">
-                {column.id === "todo" ? "Start with New Task" : "Ready for movement"}
+              <p className="mt-1 font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/36">
+                {column.id === "todo" ? "Begin here" : "Awaiting motion"}
               </p>
             </div>
           )}

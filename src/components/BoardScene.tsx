@@ -86,10 +86,10 @@ const BoardScene = ({
 
   const statusToneClasses =
     statusTone === "error"
-      ? "border-seal/20 bg-seal/5 text-seal/70"
+      ? "border-seal/24 bg-seal/6 text-seal/74"
       : statusTone === "loading"
-        ? "border-border/25 bg-background/55 text-muted-foreground/55"
-        : "border-olive/15 bg-olive/5 text-olive/60";
+        ? "border-border/28 bg-background/60 text-muted-foreground/62"
+        : "border-olive/18 bg-olive/6 text-olive/66";
 
   return (
     <div className="h-full w-full bg-background relative flex flex-col overflow-hidden">
@@ -117,15 +117,15 @@ const BoardScene = ({
       {/* Floating header controls */}
       {isActive && (
         <motion.div
-          className="relative z-20 flex items-center justify-between px-8 lg:px-12 py-5"
+          className="relative z-20 flex items-center justify-between px-5 py-4 sm:px-8 sm:py-5 lg:px-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <span className="font-display text-sm tracking-[0.15em] text-foreground/50">
+          <span className="font-display text-sm tracking-[0.15em] text-foreground/58">
             改善
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {statusText && (
               <span
                 className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-[9px] font-body uppercase tracking-[0.18em] ${statusToneClasses}`}
@@ -142,12 +142,12 @@ const BoardScene = ({
                 <span>{statusText}</span>
               </span>
             )}
-            <button className="p-2 text-muted-foreground/40 hover:text-foreground transition-colors duration-300">
+            <button className="p-2 text-muted-foreground/48 transition-colors duration-300 hover:text-foreground/80">
               <Search size={13} />
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-body tracking-[0.15em] uppercase text-foreground/50 hover:text-foreground border border-border/30 hover:border-border/50 transition-all duration-300 disabled:cursor-not-allowed disabled:border-border/15 disabled:text-muted-foreground/30"
+              className="flex items-center gap-1.5 border border-border/35 px-3 py-1 text-[10px] font-body uppercase tracking-[0.15em] text-foreground/56 transition-all duration-300 hover:border-border/55 hover:text-foreground/82 disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/32"
               onClick={() => setIsCreateDialogOpen(true)}
               disabled={!canCreateTask}
             >
