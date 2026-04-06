@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Noto+Serif+JP:wght@200;300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 39 33% 90%;
+    --foreground: 0 0% 7%;
+
+    --card: 40 30% 92%;
+    --card-foreground: 0 0% 7%;
+
+    --popover: 39 33% 90%;
+    --popover-foreground: 0 0% 7%;
+
+    --primary: 82 27% 30%;
+    --primary-foreground: 39 33% 95%;
+
+    --secondary: 39 20% 82%;
+    --secondary-foreground: 0 0% 7%;
+
+    --muted: 39 18% 85%;
+    --muted-foreground: 30 8% 45%;
+
+    --accent: 0 65% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 15% 82%;
+    --input: 35 15% 78%;
+    --ring: 82 27% 30%;
+
+    --radius: 0.25rem;
+
+    --sidebar-background: 39 28% 88%;
+    --sidebar-foreground: 0 0% 7%;
+    --sidebar-primary: 82 27% 30%;
+    --sidebar-primary-foreground: 39 33% 95%;
+    --sidebar-accent: 39 20% 82%;
+    --sidebar-accent-foreground: 0 0% 7%;
+    --sidebar-border: 35 15% 78%;
+    --sidebar-ring: 82 27% 30%;
+
+    /* Custom tokens */
+    --paper: 39 33% 90%;
+    --ink: 0 0% 7%;
+    --olive: 82 27% 30%;
+    --seal: 0 65% 45%;
+    --paper-dark: 39 25% 85%;
+    
+    --font-display: 'Noto Serif JP', serif;
+    --font-body: 'Cormorant Garamond', serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+
+  /* Subtle paper grain texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
+  }
+}
+
+/* Brush mask button animation */
+@keyframes mask-reveal {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+
+@keyframes mask-hide {
+  from {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+  to {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+}
+
+/* Ink edge sweep during reveal */
+@keyframes ink-edge-sweep {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
