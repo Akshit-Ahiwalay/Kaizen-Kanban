@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import type { KanbanCard } from "./BoardScene";
+import type { KanbanCard } from "@/features/board/types";
 
 interface TaskCardProps {
   card: KanbanCard;

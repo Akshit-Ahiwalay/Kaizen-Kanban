@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import LandingScreen from "@/components/LandingScreen";
 import BoardScene from "@/components/BoardScene";
+import { demoColumns } from "@/features/board/data";
 
 type AppState = "landing" | "revealing" | "board";
 
@@ -19,7 +20,7 @@ const Index = () => {
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Board is always mounted underneath */}
       <div className="absolute inset-0 z-10">
-        <BoardScene isActive={state !== "landing"} />
+        <BoardScene columns={demoColumns} isActive={state !== "landing"} />
       </div>
 
       {/* Landing screen sits on top, gets clipped away during reveal */}

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import type { Column } from "./BoardScene";
+import type { Column } from "@/features/board/types";
 import TaskCard from "./TaskCard";
 
 interface BoardColumnProps {
