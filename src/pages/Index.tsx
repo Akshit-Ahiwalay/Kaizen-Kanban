@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import LandingScreen from "@/components/LandingScreen";
 import BoardScene from "@/components/BoardScene";
-import type { Column, CreateTaskInput } from "@/features/board/types";
+import type { Column, CreateTaskInput, MoveTaskInput } from "@/features/board/types";
 import { createInitialBoardColumns } from "@/features/board/data";
-import { createTaskInTodoColumn } from "@/features/board/mutations";
+import { createTaskInTodoColumn, moveTask } from "@/features/board/mutations";
 
 type AppState = "landing" | "revealing" | "board";
 
@@ -23,6 +23,10 @@ const Index = () => {
     setBoardColumns((currentColumns) => createTaskInTodoColumn(currentColumns, task));
   }, []);
 
+  const handleMoveTask = useCallback((taskMove: MoveTaskInput) => {
+    setBoardColumns((currentColumns) => moveTask(currentColumns, taskMove));
+  }, []);
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Board is always mounted underneath */}
@@ -31,6 +35,7 @@ const Index = () => {
           columns={boardColumns}
           isActive={state !== "landing"}
           onCreateTask={handleCreateTask}
+          onMoveTask={handleMoveTask}
         />
       </div>
 

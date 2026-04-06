@@ -1,6 +1,7 @@
+import { useDroppable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import type { Column } from "@/features/board/types";
-import TaskCard from "./TaskCard";
+import DraggableTaskCard from "./DraggableTaskCard";
 
 interface BoardColumnProps {
   column: Column;
@@ -10,11 +11,20 @@ interface BoardColumnProps {
 }
 
 const BoardColumn = ({ column, index, isLast, isActive }: BoardColumnProps) => {
+  const { isOver, setNodeRef } = useDroppable({
+    id: column.id,
+    data: {
+      type: "column",
+      columnId: column.id,
+    },
+  });
+
   return (
     <div
+      ref={setNodeRef}
       className={`flex-1 min-w-[220px] flex flex-col px-5 lg:px-7 pt-4 pb-4 ${
         !isLast ? "border-r border-border/15" : ""
-      }`}
+      } ${isOver ? "bg-background/25" : ""}`}
     >
       {/* Column header */}
       {isActive && (
@@ -34,15 +44,16 @@ const BoardColumn = ({ column, index, isLast, isActive }: BoardColumnProps) => {
       )}
 
       {/* Thin separator */}
-      <div className="h-px bg-border/20 mb-4" />
+      <div className={`h-px mb-4 transition-colors duration-200 ${isOver ? "bg-border/35" : "bg-border/20"}`} />
 
       {/* Cards */}
       <div className="flex flex-col gap-2.5 flex-1">
         {isActive &&
           column.cards.map((card, cardIndex) => (
-            <TaskCard
+            <DraggableTaskCard
               key={card.id}
               card={card}
+              columnId={column.id}
               delay={0.5 + index * 0.1 + cardIndex * 0.06}
             />
           ))}

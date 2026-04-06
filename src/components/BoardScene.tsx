@@ -1,19 +1,61 @@
+import {
+  closestCorners,
+  DndContext,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Plus, Search } from "lucide-react";
-import type { Column, CreateTaskInput } from "@/features/board/types";
+import type { Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "@/features/board/types";
 import BoardColumn from "./BoardColumn";
 import CreateTaskDialog from "./CreateTaskDialog";
 import SamuraiSilhouette from "./SamuraiSilhouette";
+import TaskCard from "./TaskCard";
 
 interface BoardSceneProps {
   columns: Column[];
   isActive: boolean;
   onCreateTask: (task: CreateTaskInput) => void;
+  onMoveTask: (taskMove: MoveTaskInput) => void;
 }
 
-const BoardScene = ({ columns, isActive, onCreateTask }: BoardSceneProps) => {
+const BoardScene = ({ columns, isActive, onCreateTask, onMoveTask }: BoardSceneProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+  );
+
+  const activeTask =
+    activeTaskId === null
+      ? null
+      : columns.flatMap((column) => column.cards).find((card) => card.id === activeTaskId) ?? null;
+
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    setActiveTaskId(String(active.id));
+  };
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setActiveTaskId(null);
+
+    if (!over) {
+      return;
+    }
+
+    const taskId = String(active.id);
+    const targetColumnId = String(over.id);
+
+    onMoveTask({ taskId, targetColumnId });
+  };
 
   return (
     <div className="h-full w-full bg-background relative flex flex-col overflow-hidden">
@@ -66,17 +108,29 @@ const BoardScene = ({ columns, isActive, onCreateTask }: BoardSceneProps) => {
       )}
 
       {/* Kanban columns */}
-      <div className="relative z-10 flex-1 flex overflow-x-auto">
-        {columns.map((column, i) => (
-          <BoardColumn
-            key={column.id}
-            column={column}
-            index={i}
-            isLast={i === columns.length - 1}
-            isActive={isActive}
-          />
-        ))}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveTaskId(null)}
+      >
+        <div className="relative z-10 flex-1 flex overflow-x-auto">
+          {columns.map((column, i) => (
+            <BoardColumn
+              key={column.id}
+              column={column}
+              index={i}
+              isLast={i === columns.length - 1}
+              isActive={isActive}
+            />
+          ))}
+        </div>
+
+        <DragOverlay dropAnimation={null}>
+          {activeTask ? <TaskCard card={activeTask} delay={0} animateIn={false} elevated /> : null}
+        </DragOverlay>
+      </DndContext>
 
       <CreateTaskDialog
         open={isCreateDialogOpen}
