@@ -23,7 +23,9 @@ interface BoardSceneProps {
   onCreateTask: (task: CreateTaskInput) => void;
   onMoveTask: (taskMove: MoveTaskInput) => void;
   statusText?: string | null;
+  statusTone?: "loading" | "guest" | "error" | null;
   canCreateTask?: boolean;
+  isBoardLoading?: boolean;
 }
 
 const BoardScene = ({
@@ -32,7 +34,9 @@ const BoardScene = ({
   onCreateTask,
   onMoveTask,
   statusText = null,
+  statusTone = null,
   canCreateTask = true,
+  isBoardLoading = false,
 }: BoardSceneProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -80,6 +84,13 @@ const BoardScene = ({
     onMoveTask({ taskId, targetColumnId });
   };
 
+  const statusToneClasses =
+    statusTone === "error"
+      ? "border-seal/20 bg-seal/5 text-seal/70"
+      : statusTone === "loading"
+        ? "border-border/25 bg-background/55 text-muted-foreground/55"
+        : "border-olive/15 bg-olive/5 text-olive/60";
+
   return (
     <div className="h-full w-full bg-background relative flex flex-col overflow-hidden">
       {/* Red sun */}
@@ -116,8 +127,19 @@ const BoardScene = ({
           </span>
           <div className="flex items-center gap-3">
             {statusText && (
-              <span className="text-[9px] font-body uppercase tracking-[0.18em] text-muted-foreground/40">
-                {statusText}
+              <span
+                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-[9px] font-body uppercase tracking-[0.18em] ${statusToneClasses}`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    statusTone === "loading"
+                      ? "animate-pulse bg-muted-foreground/45"
+                      : statusTone === "error"
+                        ? "bg-seal/60"
+                        : "bg-olive/45"
+                  }`}
+                />
+                <span>{statusText}</span>
               </span>
             )}
             <button className="p-2 text-muted-foreground/40 hover:text-foreground transition-colors duration-300">
@@ -153,6 +175,7 @@ const BoardScene = ({
               isLast={i === columns.length - 1}
               isActive={isActive}
               recentlyMovedTaskId={recentlyMovedTaskId}
+              isBoardLoading={isBoardLoading}
             />
           ))}
         </div>

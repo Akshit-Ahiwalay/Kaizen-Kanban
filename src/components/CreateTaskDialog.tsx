@@ -77,6 +77,9 @@ const CreateTaskDialog = ({
               TASK ENTRY
             </p>
             <h2 className="mt-2 font-display text-2xl text-foreground/80">New Task</h2>
+            <p className="mt-2 font-body text-xs text-muted-foreground/45">
+              New items appear in the To Do column and sync into your guest workspace.
+            </p>
           </div>
           <button
             type="button"
@@ -97,6 +100,7 @@ const CreateTaskDialog = ({
             </label>
             <input
               id="task-title"
+              autoFocus
               value={draft.title}
               onChange={(event) => {
                 setDraft((current) => ({ ...current, title: event.target.value }));

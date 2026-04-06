@@ -198,8 +198,12 @@ const Index = () => {
   }, [isAuthLoading, userId]);
 
   const boardStatusText = useMemo(() => {
+    if (!shouldUseSupabase) {
+      return null;
+    }
+
     if (syncError) {
-      return syncError;
+      return "Sync issue";
     }
 
     if (isAuthLoading || isBoardLoading) {
@@ -208,6 +212,26 @@ const Index = () => {
 
     if (session?.user?.is_anonymous) {
       return "Guest";
+    }
+
+    return null;
+  }, [isAuthLoading, isBoardLoading, session?.user?.is_anonymous, syncError]);
+
+  const boardStatusTone = useMemo(() => {
+    if (!shouldUseSupabase) {
+      return null;
+    }
+
+    if (syncError) {
+      return "error" as const;
+    }
+
+    if (isAuthLoading || isBoardLoading) {
+      return "loading" as const;
+    }
+
+    if (session?.user?.is_anonymous) {
+      return "guest" as const;
     }
 
     return null;
@@ -223,7 +247,9 @@ const Index = () => {
           onCreateTask={handleCreateTask}
           onMoveTask={handleMoveTask}
           statusText={boardStatusText}
+          statusTone={boardStatusTone}
           canCreateTask={!shouldUseSupabase || !!userId}
+          isBoardLoading={isAuthLoading || isBoardLoading}
         />
       </div>
 

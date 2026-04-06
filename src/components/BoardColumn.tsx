@@ -9,6 +9,7 @@ interface BoardColumnProps {
   isLast: boolean;
   isActive: boolean;
   recentlyMovedTaskId?: string | null;
+  isBoardLoading?: boolean;
 }
 
 const BoardColumn = ({
@@ -17,6 +18,7 @@ const BoardColumn = ({
   isLast,
   isActive,
   recentlyMovedTaskId,
+  isBoardLoading = false,
 }: BoardColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: column.id,
@@ -55,7 +57,28 @@ const BoardColumn = ({
 
       {/* Cards */}
       <div className="flex flex-col gap-2.5 flex-1">
+        {isActive && isBoardLoading && column.cards.length === 0 && (
+          <>
+            <div className="h-[72px] animate-pulse border border-border/15 bg-background/35" />
+            <div className="h-[88px] animate-pulse border border-border/10 bg-background/25" />
+          </>
+        )}
+
         {isActive &&
+          !isBoardLoading &&
+          column.cards.length === 0 && (
+            <div className="mt-1 border border-dashed border-border/20 bg-background/20 px-4 py-4 text-center">
+              <p className="font-body text-xs text-muted-foreground/55">
+                {column.id === "todo" ? "No tasks yet." : "Drop tasks here."}
+              </p>
+              <p className="mt-1 font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/30">
+                {column.id === "todo" ? "Start with New Task" : "Ready for movement"}
+              </p>
+            </div>
+          )}
+
+        {isActive &&
+          !isBoardLoading &&
           column.cards.map((card, cardIndex) => (
             <DraggableTaskCard
               key={card.id}

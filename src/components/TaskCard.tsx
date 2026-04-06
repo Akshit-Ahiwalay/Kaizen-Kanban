@@ -37,6 +37,12 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
         {card.title}
       </h3>
 
+      {card.description && (
+        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground/55">
+          {card.description}
+        </p>
+      )}
+
       {(card.dueDate || card.priority || card.done) && (
         <div className="flex items-center gap-2 mt-2">
           {card.priority && (
