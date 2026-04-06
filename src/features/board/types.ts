@@ -21,3 +21,9 @@ export interface CreateTaskInput {
   priority?: KanbanPriority;
   dueDate?: string;
 }
+
+export interface MoveTaskInput {
+  taskId: string;
+  targetColumnId: string;
+  targetIndex?: number;
+}

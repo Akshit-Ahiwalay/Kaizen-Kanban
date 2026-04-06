@@ -1,4 +1,4 @@
-import type { Column, CreateTaskInput, KanbanCard } from "./types";
+import type { Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "./types";
 
 const TODO_COLUMN_ID = "todo";
 
@@ -43,4 +43,58 @@ export const createTaskInTodoColumn = (
       ? { ...column, cards: [buildTask(task), ...column.cards] }
       : column,
   );
+};
+
+const clampTargetIndex = (index: number | undefined, maxIndex: number) => {
+  if (index === undefined) {
+    return 0;
+  }
+
+  return Math.min(Math.max(index, 0), maxIndex);
+};
+
+export const moveTask = (
+  columns: Column[],
+  { taskId, targetColumnId, targetIndex }: MoveTaskInput,
+): Column[] => {
+  const sourceColumnIndex = columns.findIndex((column) =>
+    column.cards.some((card) => card.id === taskId),
+  );
+
+  if (sourceColumnIndex === -1) {
+    return columns;
+  }
+
+  const targetColumnIndex = columns.findIndex((column) => column.id === targetColumnId);
+
+  if (targetColumnIndex === -1 || sourceColumnIndex === targetColumnIndex) {
+    return columns;
+  }
+
+  const sourceColumn = columns[sourceColumnIndex];
+  const targetColumn = columns[targetColumnIndex];
+  const taskIndex = sourceColumn.cards.findIndex((card) => card.id === taskId);
+
+  if (taskIndex === -1) {
+    return columns;
+  }
+
+  const task = sourceColumn.cards[taskIndex];
+  const nextSourceCards = sourceColumn.cards.filter((card) => card.id !== taskId);
+  const insertionIndex = clampTargetIndex(targetIndex, targetColumn.cards.length);
+  const nextTargetCards = [...targetColumn.cards];
+
+  nextTargetCards.splice(insertionIndex, 0, task);
+
+  return columns.map((column, index) => {
+    if (index === sourceColumnIndex) {
+      return { ...column, cards: nextSourceCards };
+    }
+
+    if (index === targetColumnIndex) {
+      return { ...column, cards: nextTargetCards };
+    }
+
+    return column;
+  });
 };
