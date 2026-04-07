@@ -9,8 +9,13 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import {
+  DEFAULT_BOARD_FILTERS,
+  filterBoardColumns,
+  hasActiveBoardFilters,
+} from "@/features/board/filters";
 import type { Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "@/features/board/types";
 import BoardColumn from "./BoardColumn";
 import CreateTaskDialog from "./CreateTaskDialog";
@@ -41,6 +46,8 @@ const BoardScene = ({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [recentlyMovedTaskId, setRecentlyMovedTaskId] = useState<string | null>(null);
+  const [isFilterTrayOpen, setIsFilterTrayOpen] = useState(false);
+  const [filters, setFilters] = useState(DEFAULT_BOARD_FILTERS);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -49,10 +56,22 @@ const BoardScene = ({
     }),
   );
 
+  const filteredColumns = useMemo(
+    () => filterBoardColumns(columns, filters),
+    [columns, filters],
+  );
+  const hasActiveFilters = useMemo(() => hasActiveBoardFilters(filters), [filters]);
+  const isFilterTrayVisible = isFilterTrayOpen || hasActiveFilters;
+  const hasVisibleResults = useMemo(
+    () => filteredColumns.some((column) => column.cards.length > 0),
+    [filteredColumns],
+  );
+
   const activeTask =
     activeTaskId === null
       ? null
-      : columns.flatMap((column) => column.cards).find((card) => card.id === activeTaskId) ?? null;
+      : filteredColumns.flatMap((column) => column.cards).find((card) => card.id === activeTaskId) ??
+        null;
 
   useEffect(() => {
     if (!recentlyMovedTaskId) {
@@ -117,11 +136,12 @@ const BoardScene = ({
       {/* Floating header controls */}
       {isActive && (
         <motion.div
-          className="relative z-20 flex items-center justify-between px-5 py-4 sm:px-8 sm:py-5 lg:px-12"
+          className="relative z-20 px-5 py-4 sm:px-8 sm:py-5 lg:px-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
+          <div className="flex items-center justify-between gap-4">
           <span className="font-display text-sm tracking-[0.15em] text-foreground/58">
             改善
           </span>
@@ -142,7 +162,16 @@ const BoardScene = ({
                 <span>{statusText}</span>
               </span>
             )}
-            <button className="p-2 text-muted-foreground/48 transition-colors duration-300 hover:text-foreground/80">
+            <button
+              type="button"
+              aria-label="Toggle search and filters"
+              className={`p-2 transition-colors duration-300 ${
+                isFilterTrayVisible
+                  ? "text-foreground/78"
+                  : "text-muted-foreground/48 hover:text-foreground/80"
+              }`}
+              onClick={() => setIsFilterTrayOpen((current) => !current)}
+            >
               <Search size={13} />
             </button>
             <button
@@ -155,6 +184,90 @@ const BoardScene = ({
               <span>New Task</span>
             </button>
           </div>
+          </div>
+
+          {isFilterTrayVisible && (
+            <motion.div
+              className="mt-4 flex flex-wrap items-center gap-2 border border-border/22 bg-background/42 px-3 py-3 backdrop-blur-[2px]"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex min-w-[220px] flex-1 items-center gap-2 border border-border/22 bg-background/55 px-3 py-2">
+                <Search size={12} className="text-muted-foreground/45" />
+                <input
+                  aria-label="Search task titles"
+                  value={filters.search}
+                  onChange={(event) =>
+                    setFilters((current) => ({ ...current, search: event.target.value }))
+                  }
+                  placeholder="Search titles"
+                  className="w-full bg-transparent font-body text-xs text-foreground/74 outline-none placeholder:text-muted-foreground/34"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 border border-border/22 bg-background/55 px-3 py-2">
+                  <SlidersHorizontal size={12} className="text-muted-foreground/42" />
+                  <select
+                    aria-label="Filter by priority"
+                    value={filters.priority}
+                    onChange={(event) =>
+                      setFilters((current) => ({
+                        ...current,
+                        priority: event.target.value as typeof current.priority,
+                      }))
+                    }
+                    className="bg-transparent font-body text-[11px] uppercase tracking-[0.15em] text-foreground/68 outline-none"
+                  >
+                    <option value="all">All priorities</option>
+                    <option value="high">High</option>
+                    <option value="normal">Normal</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+
+                <div className="border border-border/22 bg-background/55 px-3 py-2">
+                  <select
+                    aria-label="Filter by status"
+                    value={filters.status}
+                    onChange={(event) =>
+                      setFilters((current) => ({
+                        ...current,
+                        status: event.target.value as typeof current.status,
+                      }))
+                    }
+                    className="bg-transparent font-body text-[11px] uppercase tracking-[0.15em] text-foreground/68 outline-none"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="todo">To Do</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="in-review">In Review</option>
+                    <option value="done">Done</option>
+                  </select>
+                </div>
+              </div>
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  className="px-2 py-1 font-body text-[10px] uppercase tracking-[0.18em] text-muted-foreground/52 transition-colors duration-300 hover:text-foreground/76"
+                  onClick={() => {
+                    setFilters(DEFAULT_BOARD_FILTERS);
+                    setIsFilterTrayOpen(false);
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+
+              {hasActiveFilters && !hasVisibleResults && (
+                <span className="font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/40">
+                  No matching tasks
+                </span>
+              )}
+            </motion.div>
+          )}
         </motion.div>
       )}
 
@@ -167,7 +280,7 @@ const BoardScene = ({
         onDragCancel={() => setActiveTaskId(null)}
       >
         <div className="relative z-10 flex-1 flex overflow-x-auto">
-          {columns.map((column, i) => (
+          {filteredColumns.map((column, i) => (
             <BoardColumn
               key={column.id}
               column={column}
@@ -176,6 +289,7 @@ const BoardScene = ({
               isActive={isActive}
               recentlyMovedTaskId={recentlyMovedTaskId}
               isBoardLoading={isBoardLoading}
+              hasActiveFilters={hasActiveFilters}
             />
           ))}
         </div>

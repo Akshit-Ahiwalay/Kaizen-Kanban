@@ -33,4 +33,28 @@ describe("Index page", () => {
 
     expect(screen.getByText("Refine card creation flow")).toBeInTheDocument();
   });
+
+  it("filters visible tasks by title, priority, and status", () => {
+    render(createElement(Index));
+
+    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: /toggle search and filters/i }));
+
+    fireEvent.change(screen.getByLabelText("Search task titles"), {
+      target: { value: "documentation" },
+    });
+
+    expect(screen.getByText("Write documentation")).toBeInTheDocument();
+    expect(screen.queryByText("Design landing page")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Filter by priority"), {
+      target: { value: "high" },
+    });
+    fireEvent.change(screen.getByLabelText("Filter by status"), {
+      target: { value: "in-review" },
+    });
+
+    expect(screen.getByText("Write documentation")).toBeInTheDocument();
+    expect(screen.queryByText("Content summary")).not.toBeInTheDocument();
+  });
 });

@@ -10,6 +10,7 @@ interface BoardColumnProps {
   isActive: boolean;
   recentlyMovedTaskId?: string | null;
   isBoardLoading?: boolean;
+  hasActiveFilters?: boolean;
 }
 
 const BoardColumn = ({
@@ -19,6 +20,7 @@ const BoardColumn = ({
   isActive,
   recentlyMovedTaskId,
   isBoardLoading = false,
+  hasActiveFilters = false,
 }: BoardColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: column.id,
@@ -69,10 +71,18 @@ const BoardColumn = ({
           column.cards.length === 0 && (
             <div className="mt-1 border border-dashed border-border/24 bg-background/22 px-4 py-4 text-center">
               <p className="font-body text-xs text-muted-foreground/60">
-                {column.id === "todo" ? "No tasks yet" : "Drop tasks here"}
+                {hasActiveFilters
+                  ? "No matches"
+                  : column.id === "todo"
+                    ? "No tasks yet"
+                    : "Drop tasks here"}
               </p>
               <p className="mt-1 font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/36">
-                {column.id === "todo" ? "Add one to begin" : "Ready"}
+                {hasActiveFilters
+                  ? "Clear filters"
+                  : column.id === "todo"
+                    ? "Add one to begin"
+                    : "Ready"}
               </p>
             </div>
           )}
