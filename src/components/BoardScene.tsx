@@ -30,7 +30,6 @@ import type {
 import BoardColumn from "./BoardColumn";
 import AccountMenu from "./AccountMenu";
 import CreateTaskDialog from "./CreateTaskDialog";
-import SamuraiSilhouette from "./SamuraiSilhouette";
 import TaskCard from "./TaskCard";
 import TaskDetailDialog from "./TaskDetailDialog";
 import TeamMembersDialog from "./TeamMembersDialog";
@@ -184,64 +183,56 @@ const BoardScene = ({
     statusTone === "error"
       ? "border-seal/24 bg-seal/6 text-seal/74"
       : statusTone === "loading"
-        ? "border-border/28 bg-background/60 text-muted-foreground/62"
+        ? "border-border/28 bg-background/62 text-muted-foreground/66"
         : "border-olive/18 bg-olive/6 text-olive/66";
 
   return (
-    <div className="h-full w-full bg-background relative flex flex-col overflow-hidden">
-      {/* Red sun */}
-      <div className="absolute top-[6%] left-1/2 -translate-x-1/2 z-0">
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-background">
+      <div className="pointer-events-none absolute left-1/2 top-[5.5%] z-0 -translate-x-1/2">
         <div
-          className="w-10 h-10 rounded-full bg-seal/20"
+          className="h-14 w-14 rounded-full bg-seal/20 sm:h-16 sm:w-16"
           style={{
-            boxShadow: "0 0 30px 8px hsl(var(--seal) / 0.08)",
+            boxShadow: "0 0 44px 12px hsl(var(--seal) / 0.08)",
           }}
         />
       </div>
 
-      {/* Vertical red line from sun */}
       <div
-        className="absolute top-[calc(6%+44px)] left-1/2 -translate-x-1/2 w-px bg-seal/15 z-0"
-        style={{ height: "35vh" }}
+        className="pointer-events-none absolute left-1/2 top-[calc(5.5%+62px)] z-0 w-px -translate-x-1/2 bg-seal/16"
+        style={{ height: "40vh" }}
       />
-
-      {/* Samurai silhouette */}
-      <div className="absolute bottom-[4%] left-1/2 -translate-x-1/2 z-0 pointer-events-none">
-        <SamuraiSilhouette className="w-16 h-24 text-foreground/[0.04]" />
-      </div>
-
-      {/* Floating header controls */}
       {isActive && (
         <motion.div
-          className="relative z-20 px-5 py-4 sm:px-8 sm:py-5 lg:px-12"
+          className="relative z-20 px-6 py-6 sm:px-8 sm:py-7 lg:px-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <div className="flex items-center justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-2">
-          <span className="font-display text-sm tracking-[0.15em] text-foreground/58">
+          <div className="mx-auto w-full max-w-[1760px]">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="flex min-w-0 flex-col gap-3">
+          <span className="font-display text-[18px] tracking-[0.14em] text-foreground/68 sm:text-[20px]">
             改善
           </span>
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className="border border-border/18 bg-background/40 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-muted-foreground/58">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="border border-border/24 bg-background/48 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-foreground/66">
               {boardStats.totalTasks} total
             </span>
-            <span className="border border-olive/14 bg-olive/6 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-olive/62">
+            <span className="border border-olive/18 bg-olive/7 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-olive/70">
               {boardStats.doneTasks} done
             </span>
-            <span className="border border-seal/16 bg-seal/6 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-seal/66">
+            <span className="border border-seal/18 bg-seal/7 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-seal/72">
               {boardStats.overdueTasks} overdue
             </span>
-            <span className="border border-border/18 bg-background/40 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-muted-foreground/54">
+            <span className="border border-border/24 bg-background/48 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-muted-foreground/64">
               {boardStats.inProgressTasks} in progress
             </span>
           </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
             {statusText && (
               <span
-                className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-[9px] font-body uppercase tracking-[0.18em] ${statusToneClasses}`}
+                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] ${statusToneClasses}`}
               >
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
@@ -267,31 +258,31 @@ const BoardScene = ({
             <button
               type="button"
               aria-label="Manage team members"
-              className="p-2 text-muted-foreground/48 transition-colors duration-300 hover:text-foreground/80 disabled:cursor-not-allowed disabled:text-muted-foreground/26"
+              className="p-2.5 text-muted-foreground/58 transition-colors duration-300 hover:text-foreground/82 disabled:cursor-not-allowed disabled:text-muted-foreground/26"
               onClick={() => setIsTeamDialogOpen(true)}
               disabled={!canCreateTask}
             >
-              <Users size={13} />
+              <Users size={15} />
             </button>
             <button
               type="button"
               aria-label="Toggle search and filters"
-              className={`p-2 transition-colors duration-300 ${
+              className={`p-2.5 transition-colors duration-300 ${
                 isFilterTrayVisible
                   ? "text-foreground/78"
-                  : "text-muted-foreground/48 hover:text-foreground/80"
+                  : "text-muted-foreground/58 hover:text-foreground/82"
               }`}
               onClick={() => setIsFilterTrayOpen((current) => !current)}
             >
-              <Search size={13} />
+              <Search size={15} />
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 border border-border/35 px-3 py-1 text-[10px] font-body uppercase tracking-[0.15em] text-foreground/56 transition-all duration-300 hover:border-border/55 hover:text-foreground/82 disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/32"
+              className="flex items-center gap-2 border border-border/38 px-4 py-2 text-[12px] font-body uppercase tracking-[0.14em] text-foreground/66 transition-all duration-300 hover:border-border/56 hover:text-foreground/84 disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/32"
               onClick={() => setIsCreateDialogOpen(true)}
               disabled={!canCreateTask}
             >
-              <Plus size={11} />
+              <Plus size={12} />
               <span>New Task</span>
             </button>
           </div>
@@ -299,13 +290,13 @@ const BoardScene = ({
 
           {isFilterTrayVisible && (
             <motion.div
-              className="mt-4 flex flex-wrap items-center gap-2 border border-border/22 bg-background/42 px-3 py-3 backdrop-blur-[2px]"
+              className="mt-5 flex flex-wrap items-center gap-2.5 border border-border/24 bg-background/46 px-4 py-4 backdrop-blur-[2px]"
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex min-w-[220px] flex-1 items-center gap-2 border border-border/22 bg-background/55 px-3 py-2">
-                <Search size={12} className="text-muted-foreground/45" />
+              <div className="flex min-w-[260px] flex-1 items-center gap-2.5 border border-border/24 bg-background/60 px-4 py-3">
+                <Search size={14} className="text-muted-foreground/52" />
                 <input
                   aria-label="Search task titles"
                   value={filters.search}
@@ -313,13 +304,13 @@ const BoardScene = ({
                     setFilters((current) => ({ ...current, search: event.target.value }))
                   }
                   placeholder="Search titles"
-                  className="w-full bg-transparent font-body text-xs text-foreground/74 outline-none placeholder:text-muted-foreground/34"
+                  className="w-full bg-transparent font-body text-[14px] text-foreground/82 outline-none placeholder:text-muted-foreground/44"
                 />
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 border border-border/22 bg-background/55 px-3 py-2">
-                  <SlidersHorizontal size={12} className="text-muted-foreground/42" />
+                <div className="flex items-center gap-2.5 border border-border/24 bg-background/60 px-4 py-3">
+                  <SlidersHorizontal size={14} className="text-muted-foreground/52" />
                   <select
                     aria-label="Filter by priority"
                     value={filters.priority}
@@ -329,7 +320,7 @@ const BoardScene = ({
                         priority: event.target.value as typeof current.priority,
                       }))
                     }
-                    className="bg-transparent font-body text-[11px] uppercase tracking-[0.15em] text-foreground/68 outline-none"
+                    className="bg-transparent font-body text-[12px] uppercase tracking-[0.12em] text-foreground/76 outline-none"
                   >
                     <option value="all">All priorities</option>
                     <option value="high">High</option>
@@ -338,7 +329,7 @@ const BoardScene = ({
                   </select>
                 </div>
 
-                <div className="border border-border/22 bg-background/55 px-3 py-2">
+                <div className="border border-border/24 bg-background/60 px-4 py-3">
                   <select
                     aria-label="Filter by status"
                     value={filters.status}
@@ -348,7 +339,7 @@ const BoardScene = ({
                         status: event.target.value as typeof current.status,
                       }))
                     }
-                    className="bg-transparent font-body text-[11px] uppercase tracking-[0.15em] text-foreground/68 outline-none"
+                    className="bg-transparent font-body text-[12px] uppercase tracking-[0.12em] text-foreground/76 outline-none"
                   >
                     <option value="all">All statuses</option>
                     <option value="todo">To Do</option>
@@ -358,7 +349,7 @@ const BoardScene = ({
                   </select>
                 </div>
 
-                <div className="border border-border/22 bg-background/55 px-3 py-2">
+                <div className="border border-border/24 bg-background/60 px-4 py-3">
                   <select
                     aria-label="Filter by assignee"
                     value={filters.assigneeId}
@@ -368,7 +359,7 @@ const BoardScene = ({
                         assigneeId: event.target.value,
                       }))
                     }
-                    className="bg-transparent font-body text-[11px] uppercase tracking-[0.15em] text-foreground/68 outline-none"
+                    className="bg-transparent font-body text-[12px] uppercase tracking-[0.12em] text-foreground/76 outline-none"
                   >
                     <option value={ALL_ASSIGNEES_FILTER}>All assignees</option>
                     <option value={UNASSIGNED_ASSIGNEE_FILTER}>Unassigned</option>
@@ -384,7 +375,7 @@ const BoardScene = ({
               {hasActiveFilters && (
                 <button
                   type="button"
-                  className="px-2 py-1 font-body text-[10px] uppercase tracking-[0.18em] text-muted-foreground/52 transition-colors duration-300 hover:text-foreground/76"
+                  className="px-2 py-1.5 font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground/78"
                   onClick={() => {
                     setFilters(DEFAULT_BOARD_FILTERS);
                     setIsFilterTrayOpen(false);
@@ -395,16 +386,16 @@ const BoardScene = ({
               )}
 
               {hasActiveFilters && !hasVisibleResults && (
-                <span className="font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/40">
+                <span className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/50">
                   No matching tasks
                 </span>
               )}
             </motion.div>
           )}
+          </div>
         </motion.div>
       )}
 
-      {/* Kanban columns */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -412,20 +403,22 @@ const BoardScene = ({
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveTaskId(null)}
       >
-        <div className="relative z-10 flex-1 flex overflow-x-auto">
-          {filteredColumns.map((column, i) => (
-            <BoardColumn
-              key={column.id}
-              column={column}
-              index={i}
-              isLast={i === columns.length - 1}
-              isActive={isActive}
-              recentlyMovedTaskId={recentlyMovedTaskId}
-              isBoardLoading={isBoardLoading}
-              hasActiveFilters={hasActiveFilters}
-              onSelectTask={handleSelectTask}
-            />
-          ))}
+        <div className="relative z-10 flex-1 overflow-x-auto px-4 pb-6 sm:px-6 lg:px-10 xl:px-12">
+          <div className="mx-auto flex h-full w-full min-w-max max-w-[1760px]">
+            {filteredColumns.map((column, i) => (
+              <BoardColumn
+                key={column.id}
+                column={column}
+                index={i}
+                isLast={i === columns.length - 1}
+                isActive={isActive}
+                recentlyMovedTaskId={recentlyMovedTaskId}
+                isBoardLoading={isBoardLoading}
+                hasActiveFilters={hasActiveFilters}
+                onSelectTask={handleSelectTask}
+              />
+            ))}
+          </div>
         </div>
 
         <DragOverlay dropAnimation={null}>

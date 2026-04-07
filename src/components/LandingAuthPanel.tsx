@@ -58,9 +58,9 @@ const LandingAuthPanel = ({
 
   if (!canUseSupabase) {
     return (
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-3.5">
         <EnterButton onClick={onEnter} />
-        <p className="font-body text-[10px] uppercase tracking-[0.18em] text-muted-foreground/38">
+        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           Local board
         </p>
       </div>
@@ -69,18 +69,18 @@ const LandingAuthPanel = ({
 
   if (hasSession) {
     return (
-      <div className="flex flex-col items-center gap-2.5">
+      <div className="flex flex-col items-center gap-3">
         <EnterButton onClick={onEnter} disabled={isBusy} />
-        <p className="font-body text-[10px] uppercase tracking-[0.18em] text-muted-foreground/38">
+        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           {isGuestSession ? "Guest access ready" : "Signed in"}
         </p>
         {accountLabel && !isGuestSession && (
-          <p className="font-body text-[11px] text-muted-foreground/54">
+          <p className="font-body text-[13px] text-muted-foreground/62">
             {accountLabel}
           </p>
         )}
         {statusMessage && (
-          <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/42">
+          <p className="font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
             {statusMessage}
           </p>
         )}
@@ -89,28 +89,28 @@ const LandingAuthPanel = ({
   }
 
   return (
-    <div className="flex w-full max-w-sm flex-col items-center gap-3.5">
-      <div className="flex flex-col items-center gap-2.5">
+    <div className="flex w-full max-w-[25rem] flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-3">
         <EnterButton onClick={() => void onContinueAsGuest()} disabled={isBusy || isSendingLink} />
-        <p className="font-body text-[10px] uppercase tracking-[0.18em] text-muted-foreground/38">
+        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           Continue as guest
         </p>
       </div>
 
-      <div className="flex w-full flex-col gap-2.5 border border-border/18 bg-background/40 px-4 py-4">
-        <p className="font-body text-[10px] uppercase tracking-[0.18em] text-muted-foreground/34">
+      <div className="flex w-full flex-col gap-3 border border-border/22 bg-background/42 px-5 py-5">
+        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/44">
           Or sign in
         </p>
         <button
           type="button"
-          className="border border-border/26 px-4 py-2 text-[10px] font-body uppercase tracking-[0.18em] text-foreground/68 transition-all duration-300 hover:border-border/48 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+          className="border border-border/30 px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/74 transition-all duration-300 hover:border-border/50 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
           onClick={() => void onContinueWithGoogle()}
           disabled={isBusy || isSendingLink}
         >
           Continue with Google
         </button>
 
-        <form className="flex flex-col gap-2" onSubmit={handleSendMagicLink}>
+        <form className="flex flex-col gap-2.5" onSubmit={handleSendMagicLink}>
           <input
             aria-label="Email for magic link"
             type="email"
@@ -122,12 +122,12 @@ const LandingAuthPanel = ({
               }
             }}
             placeholder="Email address"
-            className="w-full border border-border/22 bg-background/55 px-3 py-2 font-body text-xs text-foreground/78 outline-none placeholder:text-muted-foreground/34 focus:border-border/46"
+            className="w-full border border-border/26 bg-background/58 px-3.5 py-2.5 font-body text-[14px] text-foreground/82 outline-none placeholder:text-muted-foreground/42 focus:border-border/50"
             disabled={isBusy || isSendingLink}
           />
           <button
             type="submit"
-            className="border border-border/22 px-4 py-2 text-[10px] font-body uppercase tracking-[0.18em] text-foreground/64 transition-all duration-300 hover:border-border/42 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+            className="border border-border/26 px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/46 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
             disabled={isBusy || isSendingLink}
           >
             {isSendingLink ? "Sending..." : "Email me a magic link"}
@@ -136,7 +136,7 @@ const LandingAuthPanel = ({
       </div>
 
       {statusMessage && (
-        <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/42">
+        <p className="font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
           {statusMessage}
         </p>
       )}

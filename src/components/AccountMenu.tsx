@@ -66,10 +66,10 @@ const AccountMenu = ({
       <button
         type="button"
         aria-label="Open account menu"
-        className="flex items-center gap-2 border border-border/22 bg-background/40 px-2.5 py-1.5 text-left transition-colors duration-300 hover:border-border/38"
+        className="flex items-center gap-2.5 border border-border/24 bg-background/42 px-3 py-2 text-left transition-colors duration-300 hover:border-border/40"
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-border/24 bg-background/65 text-[10px] font-body uppercase tracking-[0.08em] text-foreground/72">
+        <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-border/26 bg-background/68 text-[10px] font-body uppercase tracking-[0.08em] text-foreground/76">
           {canShowAvatar ? (
             <img
               src={avatarUrl ?? undefined}
@@ -82,26 +82,26 @@ const AccountMenu = ({
           )}
         </span>
         <span className="hidden min-w-0 flex-col sm:flex">
-          <span className="text-[9px] font-body uppercase tracking-[0.16em] text-muted-foreground/44">
+          <span className="text-[10px] font-body uppercase tracking-[0.14em] text-muted-foreground/48">
             {toneLabel}
           </span>
-          <span className="truncate font-body text-[10px] uppercase tracking-[0.14em] text-foreground/64">
+          <span className="truncate font-body text-[11px] uppercase tracking-[0.12em] text-foreground/70">
             {label}
           </span>
         </span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-40 min-w-[220px] border border-border/22 bg-background/95 p-3 shadow-[0_24px_60px_-38px_rgba(0,0,0,0.45)] backdrop-blur-[2px]">
-          <div className="mb-3 border-b border-border/16 pb-3">
-            <p className="font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/48">
+        <div className="absolute right-0 top-[calc(100%+8px)] z-40 min-w-[240px] border border-border/24 bg-background/95 p-3.5 shadow-[0_24px_60px_-38px_rgba(0,0,0,0.45)] backdrop-blur-[2px]">
+          <div className="mb-3 border-b border-border/18 pb-3">
+            <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50">
               {toneLabel}
             </p>
-            <p className="mt-1 font-body text-[11px] uppercase tracking-[0.12em] text-foreground/68">
+            <p className="mt-1.5 font-body text-[12px] uppercase tracking-[0.1em] text-foreground/74">
               {label}
             </p>
             {detail && (
-              <p className="mt-1 font-body text-[11px] text-muted-foreground/56">
+              <p className="mt-1.5 font-body text-[12px] leading-relaxed text-muted-foreground/62">
                 {detail}
               </p>
             )}
@@ -109,7 +109,7 @@ const AccountMenu = ({
 
           <button
             type="button"
-            className="w-full border border-border/22 px-3 py-2 text-[10px] font-body uppercase tracking-[0.18em] text-foreground/68 transition-all duration-300 hover:border-border/38 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+            className="w-full border border-border/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/40 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
             disabled={isSigningOut}
             onClick={async () => {
               setIsSigningOut(true);

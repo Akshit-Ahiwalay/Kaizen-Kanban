@@ -35,51 +35,51 @@ const BoardColumn = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[220px] flex flex-col px-4 pt-4 pb-4 sm:px-5 lg:px-7 ${
+      className={`flex min-w-[260px] flex-1 flex-col px-4 pb-5 pt-5 sm:px-5 sm:pt-5 lg:min-w-[280px] lg:px-7 lg:pt-6 xl:min-w-[300px] ${
         !isLast ? "border-r border-border/18" : ""
       } ${isOver ? "bg-background/25" : ""}`}
     >
       {/* Column header */}
       {isActive && (
         <motion.div
-          className="flex items-center gap-2.5 mb-4"
+          className="mb-4 flex items-center gap-2.5"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
         >
-          <h2 className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground/68">
+          <h2 className="font-body text-[11px] tracking-[0.28em] uppercase text-foreground/68">
             {column.title}
           </h2>
-          <span className="text-[9px] font-body text-muted-foreground/34">
+          <span className="text-[10px] font-body text-muted-foreground/46">
             {column.cards.length}
           </span>
         </motion.div>
       )}
 
       {/* Thin separator */}
-      <div className={`mb-4 h-px transition-colors duration-200 ${isOver ? "bg-border/35" : "bg-border/24"}`} />
+      <div className={`mb-5 h-px transition-colors duration-200 ${isOver ? "bg-border/40" : "bg-border/28"}`} />
 
       {/* Cards */}
-      <div className="flex flex-col gap-2.5 flex-1">
+      <div className="flex flex-1 flex-col gap-3">
         {isActive && isBoardLoading && column.cards.length === 0 && (
           <>
-            <div className="h-[72px] animate-pulse border border-border/15 bg-background/35" />
-            <div className="h-[88px] animate-pulse border border-border/10 bg-background/25" />
+            <div className="h-[78px] animate-pulse border border-border/18 bg-background/38" />
+            <div className="h-[92px] animate-pulse border border-border/14 bg-background/28" />
           </>
         )}
 
         {isActive &&
           !isBoardLoading &&
           column.cards.length === 0 && (
-            <div className="mt-1 border border-dashed border-border/24 bg-background/22 px-4 py-4 text-center">
-              <p className="font-body text-xs text-muted-foreground/60">
+            <div className="mt-1 border border-dashed border-border/28 bg-background/24 px-4 py-4 text-center">
+              <p className="font-body text-[13px] text-muted-foreground/68">
                 {hasActiveFilters
                   ? "No matches"
                   : column.id === "todo"
                     ? "No tasks yet"
                     : "Drop tasks here"}
               </p>
-              <p className="mt-1 font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/36">
+              <p className="mt-1.5 font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/44">
                 {hasActiveFilters
                   ? "Clear filters"
                   : column.id === "todo"

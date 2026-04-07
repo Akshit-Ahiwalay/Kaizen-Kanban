@@ -162,28 +162,28 @@ const TaskDetailDialog = ({
         aria-label="Close task detail dialog"
       />
 
-      <div className="relative z-10 w-full max-w-lg border border-border/35 bg-background/95 p-6 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)]">
-        <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="relative z-10 w-full max-w-2xl border border-border/36 bg-background/95 p-7 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)] sm:p-8">
+        <div className="mb-7 flex items-start justify-between gap-4">
           <div>
-            <p className="font-display text-[10px] tracking-[0.35em] text-muted-foreground/50">
+            <p className="font-display text-[11px] tracking-[0.32em] text-muted-foreground/56">
               TASK DETAIL
             </p>
-            <h2 className="mt-2 font-display text-2xl text-foreground/80">Edit Task</h2>
+            <h2 className="mt-2.5 font-display text-[28px] text-foreground/84">Edit Task</h2>
           </div>
           <button
             type="button"
-            className="text-xs font-body tracking-[0.2em] uppercase text-muted-foreground/55 transition-colors duration-300 hover:text-foreground"
+            className="text-[11px] font-body tracking-[0.18em] uppercase text-muted-foreground/60 transition-colors duration-300 hover:text-foreground"
             onClick={() => onOpenChange(false)}
           >
             Close
           </button>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
             <label
               htmlFor="edit-task-title"
-              className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
             >
               Title
             </label>
@@ -197,16 +197,16 @@ const TaskDetailDialog = ({
                   setTitleError("");
                 }
               }}
-              className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 placeholder:text-muted-foreground/35 focus:border-border/60"
+              className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[15px] text-foreground/84 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
               placeholder="Task title"
             />
-            {titleError && <p className="mt-2 font-body text-xs text-seal/80">{titleError}</p>}
+            {titleError && <p className="mt-2.5 font-body text-[12px] text-seal/80">{titleError}</p>}
           </div>
 
           <div>
             <label
               htmlFor="edit-task-description"
-              className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
             >
               Description
             </label>
@@ -217,7 +217,7 @@ const TaskDetailDialog = ({
                 setDraft((current) => ({ ...current, description: event.target.value }))
               }
               rows={4}
-              className="w-full resize-none border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 placeholder:text-muted-foreground/35 focus:border-border/60"
+              className="w-full resize-none border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
               placeholder="Optional context"
             />
           </div>
@@ -226,7 +226,7 @@ const TaskDetailDialog = ({
             <div>
               <label
                 htmlFor="edit-task-priority"
-                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
               >
                 Priority
               </label>
@@ -239,7 +239,7 @@ const TaskDetailDialog = ({
                     priority: event.target.value as TaskDraft["priority"],
                   }))
                 }
-                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
               >
                 <option value="">None</option>
                 <option value="low">Low</option>
@@ -251,7 +251,7 @@ const TaskDetailDialog = ({
             <div>
               <label
                 htmlFor="edit-task-status"
-                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
               >
                 Status
               </label>
@@ -264,7 +264,7 @@ const TaskDetailDialog = ({
                     status: event.target.value as BoardColumnId,
                   }))
                 }
-                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -279,7 +279,7 @@ const TaskDetailDialog = ({
             <div>
               <label
                 htmlFor="edit-task-due-date"
-                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
               >
                 Due Date
               </label>
@@ -290,14 +290,14 @@ const TaskDetailDialog = ({
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, dueDate: event.target.value }))
                 }
-                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
               />
             </div>
 
             <div>
               <label
                 htmlFor="edit-task-assignee"
-                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
               >
                 Assignee
               </label>
@@ -310,7 +310,7 @@ const TaskDetailDialog = ({
                     assigneeId: event.target.value,
                   }))
                 }
-                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
               >
                 <option value="">Unassigned</option>
                 {teamMembers.map((member) => (
@@ -322,16 +322,16 @@ const TaskDetailDialog = ({
             </div>
           </div>
 
-          <div className="border-t border-border/18 pt-4">
+          <div className="border-t border-border/20 pt-5">
             {isConfirmingDelete ? (
               <div className="flex items-center justify-between gap-3">
-                <div className="font-body text-[10px] uppercase tracking-[0.16em] text-seal/58">
+                <div className="font-body text-[11px] uppercase tracking-[0.14em] text-seal/62">
                   Delete this task?
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    className="px-2 py-1 text-[10px] font-body uppercase tracking-[0.18em] text-muted-foreground/56 transition-colors duration-300 hover:text-foreground"
+                    className="px-2.5 py-1 text-[11px] font-body uppercase tracking-[0.16em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground"
                     onClick={() => {
                       setIsConfirmingDelete(false);
                       setDeleteError("");
@@ -342,7 +342,7 @@ const TaskDetailDialog = ({
                   </button>
                   <button
                     type="button"
-                    className="border border-seal/22 px-3 py-1.5 text-[10px] font-body uppercase tracking-[0.18em] text-seal/72 transition-all duration-300 hover:border-seal/40 hover:text-seal/84 disabled:cursor-not-allowed disabled:border-seal/12 disabled:text-seal/38"
+                    className="border border-seal/24 px-3.5 py-2 text-[11px] font-body uppercase tracking-[0.16em] text-seal/74 transition-all duration-300 hover:border-seal/42 hover:text-seal/86 disabled:cursor-not-allowed disabled:border-seal/12 disabled:text-seal/38"
                     onClick={handleDelete}
                     disabled={isDeleting}
                   >
@@ -353,7 +353,7 @@ const TaskDetailDialog = ({
             ) : (
               <button
                 type="button"
-                className="text-[10px] font-body uppercase tracking-[0.2em] text-seal/56 transition-colors duration-300 hover:text-seal/74"
+                className="text-[11px] font-body uppercase tracking-[0.18em] text-seal/58 transition-colors duration-300 hover:text-seal/76"
                 onClick={() => setIsConfirmingDelete(true)}
                 disabled={isSaving}
               >
@@ -362,14 +362,14 @@ const TaskDetailDialog = ({
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/40">
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/48">
               {deleteError ? deleteError : saveError ? saveError : isDeleting ? "Deleting" : isSaving ? "Saving" : ""}
             </div>
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="px-3 py-2 text-[10px] font-body uppercase tracking-[0.2em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground"
+                className="px-3 py-2 text-[11px] font-body uppercase tracking-[0.18em] text-muted-foreground/64 transition-colors duration-300 hover:text-foreground"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
@@ -377,7 +377,7 @@ const TaskDetailDialog = ({
               <button
                 type="submit"
                 disabled={isSaving || isDeleting}
-                className="border border-border/30 px-4 py-2 text-[10px] font-body uppercase tracking-[0.2em] text-foreground/70 transition-all duration-300 hover:border-border/55 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
+                className="border border-border/32 px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
               >
                 {isSaving ? "Saving..." : "Save"}
               </button>

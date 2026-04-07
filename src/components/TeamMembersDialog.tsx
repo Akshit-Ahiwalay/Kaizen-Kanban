@@ -78,36 +78,36 @@ const TeamMembersDialog = ({
         onClick={() => onOpenChange(false)}
       />
 
-      <div className="relative z-10 w-full max-w-md border border-border/35 bg-background/95 p-6 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)]">
-        <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="relative z-10 w-full max-w-lg border border-border/36 bg-background/95 p-7 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)] sm:p-8">
+        <div className="mb-7 flex items-start justify-between gap-4">
           <div>
-            <p className="font-display text-[10px] tracking-[0.35em] text-muted-foreground/50">
+            <p className="font-display text-[11px] tracking-[0.32em] text-muted-foreground/56">
               TEAM
             </p>
-            <h2 className="mt-2 font-display text-2xl text-foreground/80">Members</h2>
+            <h2 className="mt-2.5 font-display text-[28px] text-foreground/84">Members</h2>
           </div>
           <button
             type="button"
-            className="text-xs font-body uppercase tracking-[0.2em] text-muted-foreground/55 transition-colors duration-300 hover:text-foreground"
+            className="text-[11px] font-body uppercase tracking-[0.18em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground"
             onClick={() => onOpenChange(false)}
           >
             Close
           </button>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-2">
+        <div className="mb-6 flex flex-wrap gap-2.5">
           {members.length === 0 ? (
-            <div className="w-full border border-dashed border-border/22 bg-background/35 px-4 py-4 text-center font-body text-xs text-muted-foreground/54">
+            <div className="w-full border border-dashed border-border/24 bg-background/36 px-4 py-5 text-center font-body text-[13px] text-muted-foreground/60">
               No members yet
             </div>
           ) : (
             members.map((member) => (
               <div
                 key={member.id}
-                className="inline-flex items-center gap-2 border border-border/22 bg-background/45 px-2.5 py-2"
+                className="inline-flex items-center gap-2.5 border border-border/24 bg-background/45 px-3 py-2.5"
               >
                 <span
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-body uppercase tracking-[0.08em]"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-body uppercase tracking-[0.08em]"
                   style={{
                     color: member.color,
                     borderColor: withAlpha(member.color, "3d"),
@@ -116,17 +116,17 @@ const TeamMembersDialog = ({
                 >
                   {getInitials(member.name)}
                 </span>
-                <span className="font-body text-xs text-foreground/76">{member.name}</span>
+                <span className="font-body text-[13px] text-foreground/80">{member.name}</span>
               </div>
             ))
           )}
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
             <label
               htmlFor="team-member-name"
-              className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
             >
               Name
             </label>
@@ -140,12 +140,12 @@ const TeamMembersDialog = ({
                 }
               }}
               placeholder="Member name"
-              className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 placeholder:text-muted-foreground/35 focus:border-border/60"
+              className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[15px] text-foreground/84 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
             />
           </div>
 
           <div>
-            <p className="mb-2 font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60">
+            <p className="mb-2.5 font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66">
               Color
             </p>
             <div className="flex flex-wrap gap-2">
@@ -157,8 +157,8 @@ const TeamMembersDialog = ({
                     key={swatch}
                     type="button"
                     aria-label={`Choose member color ${swatch}`}
-                    className={`h-8 w-8 rounded-full border transition-transform duration-200 ${
-                      isSelected ? "scale-105 border-foreground/24" : "border-border/18"
+                    className={`h-9 w-9 rounded-full border transition-transform duration-200 ${
+                      isSelected ? "scale-105 border-foreground/26" : "border-border/20"
                     }`}
                     style={{ backgroundColor: swatch }}
                     onClick={() => setColor(swatch)}
@@ -168,14 +168,14 @@ const TeamMembersDialog = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/40">
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/48">
               {error || (isSaving ? "Saving" : "")}
             </div>
             <button
               type="submit"
               disabled={isSaving}
-              className="border border-border/30 px-4 py-2 text-[10px] font-body uppercase tracking-[0.2em] text-foreground/70 transition-all duration-300 hover:border-border/55 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
+              className="border border-border/32 px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
             >
               {isSaving ? "Saving..." : "Add Member"}
             </button>

@@ -70,31 +70,31 @@ const CreateTaskDialog = ({
         aria-label="Close new task dialog"
       />
 
-      <div className="relative z-10 w-full max-w-md border border-border/35 bg-background/95 p-6 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)]">
-        <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="relative z-10 w-full max-w-lg border border-border/36 bg-background/95 p-7 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)] sm:p-8">
+        <div className="mb-7 flex items-start justify-between gap-4">
           <div>
-            <p className="font-display text-[10px] tracking-[0.35em] text-muted-foreground/50">
+            <p className="font-display text-[11px] tracking-[0.32em] text-muted-foreground/56">
               TASK ENTRY
             </p>
-            <h2 className="mt-2 font-display text-2xl text-foreground/80">New Task</h2>
-            <p className="mt-2 font-body text-xs text-muted-foreground/45">
+            <h2 className="mt-2.5 font-display text-[28px] text-foreground/84">New Task</h2>
+            <p className="mt-2.5 max-w-sm font-body text-[13px] leading-relaxed text-muted-foreground/58">
               New items appear in the To Do column and sync into your guest workspace.
             </p>
           </div>
           <button
             type="button"
-            className="text-xs font-body tracking-[0.2em] uppercase text-muted-foreground/55 transition-colors duration-300 hover:text-foreground"
+            className="text-[11px] font-body tracking-[0.18em] uppercase text-muted-foreground/60 transition-colors duration-300 hover:text-foreground"
             onClick={() => onOpenChange(false)}
           >
             Close
           </button>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
             <label
               htmlFor="task-title"
-              className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
             >
               Title
             </label>
@@ -108,18 +108,18 @@ const CreateTaskDialog = ({
                   setTitleError("");
                 }
               }}
-              className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 placeholder:text-muted-foreground/35 focus:border-border/60"
+              className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[15px] text-foreground/84 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
               placeholder="Write a task title"
             />
             {titleError && (
-              <p className="mt-2 font-body text-xs text-seal/80">{titleError}</p>
+              <p className="mt-2.5 font-body text-[12px] text-seal/80">{titleError}</p>
             )}
           </div>
 
           <div>
             <label
               htmlFor="task-description"
-              className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
             >
               Description
             </label>
@@ -130,7 +130,7 @@ const CreateTaskDialog = ({
                 setDraft((current) => ({ ...current, description: event.target.value }))
               }
               rows={4}
-              className="w-full resize-none border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 placeholder:text-muted-foreground/35 focus:border-border/60"
+              className="w-full resize-none border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
               placeholder="Optional context"
             />
           </div>
@@ -139,7 +139,7 @@ const CreateTaskDialog = ({
             <div>
               <label
                 htmlFor="task-priority"
-                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
               >
                 Priority
               </label>
@@ -152,7 +152,7 @@ const CreateTaskDialog = ({
                     priority: event.target.value as TaskDraft["priority"],
                   }))
                 }
-                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
               >
                 <option value="">None</option>
                 <option value="low">Low</option>
@@ -164,7 +164,7 @@ const CreateTaskDialog = ({
             <div>
               <label
                 htmlFor="task-due-date"
-                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
               >
                 Due Date
               </label>
@@ -175,22 +175,22 @@ const CreateTaskDialog = ({
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, dueDate: event.target.value }))
                 }
-                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3">
+          <div className="flex items-center justify-end gap-3 pt-4">
             <button
               type="button"
-              className="px-3 py-2 text-[10px] font-body uppercase tracking-[0.2em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground"
+              className="px-3 py-2 text-[11px] font-body uppercase tracking-[0.18em] text-muted-foreground/64 transition-colors duration-300 hover:text-foreground"
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="border border-border/30 px-4 py-2 text-[10px] font-body uppercase tracking-[0.2em] text-foreground/70 transition-all duration-300 hover:border-border/55 hover:text-foreground"
+              className="border border-border/32 px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground"
             >
               {submitLabel}
             </button>

@@ -13,16 +13,16 @@ interface TaskCardProps {
 }
 
 const priorityColors: Record<string, string> = {
-  high: "text-seal/70",
-  normal: "text-olive/70",
-  low: "text-muted-foreground/56",
+  high: "border border-seal/18 bg-seal/7 px-2 py-0.5 text-seal/80",
+  normal: "border border-olive/18 bg-olive/7 px-2 py-0.5 text-olive/78",
+  low: "text-muted-foreground/64",
 };
 
 const dueDateClasses = {
-  none: "text-muted-foreground/46",
-  overdue: "border border-seal/18 bg-seal/6 px-2 py-0.5 text-seal/74",
-  today: "border border-seal/12 bg-seal/[0.04] px-2 py-0.5 text-foreground/72",
-  soon: "border border-olive/16 bg-olive/6 px-2 py-0.5 text-olive/72",
+  none: "text-muted-foreground/54",
+  overdue: "border border-seal/20 bg-seal/7 px-2 py-0.5 text-seal/76",
+  today: "border border-seal/14 bg-seal/[0.05] px-2 py-0.5 text-foreground/76",
+  soon: "border border-olive/18 bg-olive/7 px-2 py-0.5 text-olive/76",
 } as const;
 
 const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }: TaskCardProps) => {
@@ -31,8 +31,8 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
   return (
     <motion.div
       className={cn(
-        "group relative cursor-pointer border border-border/20 bg-background/60 px-4 py-3 transition-all duration-300 hover:border-border/40",
-        elevated && "border-border/34 bg-background/95 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.45)]",
+        "group relative cursor-pointer border border-border/26 bg-background/62 px-4 py-4 transition-all duration-300 hover:border-border/42",
+        elevated && "border-border/36 bg-background/95 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.45)]",
         className,
       )}
       initial={animateIn ? { opacity: 0, y: 6 } : false}
@@ -44,21 +44,21 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
       }}
       whileHover={elevated ? undefined : { y: -1 }}
     >
-      <h3 className="font-body text-sm leading-relaxed text-foreground/86">
+      <h3 className="font-body text-[15px] leading-relaxed text-foreground/90">
         {card.title}
       </h3>
 
       {card.description && (
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground/60">
+        <p className="mt-2.5 text-[13px] leading-relaxed text-muted-foreground/68">
           {card.description}
         </p>
       )}
 
       {(card.dueDate || card.priority || card.done || card.assignee) && (
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-3.5 flex items-center gap-2.5">
           {card.priority && (
             <span
-              className={`text-[9px] font-body tracking-wider uppercase ${priorityColors[card.priority]}`}
+              className={`text-[10px] font-body uppercase tracking-[0.12em] ${priorityColors[card.priority]}`}
             >
               {card.priority}
             </span>
@@ -66,7 +66,7 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
           {card.dueDate && (
             <span
               className={cn(
-                "text-[9px] font-body tracking-wide",
+                "text-[10px] font-body tracking-[0.08em]",
                 dueDateState === "none" ? dueDateClasses.none : dueDateClasses[dueDateState],
               )}
             >
@@ -76,7 +76,7 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
           {card.assignee && (
             <span
               aria-label={`Assignee ${card.assignee.name}`}
-              className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full border text-[9px] font-body uppercase tracking-[0.06em]"
+              className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full border text-[9px] font-body uppercase tracking-[0.06em]"
               style={{
                 color: card.assignee.color,
                 borderColor: withAlpha(card.assignee.color, "3d"),
