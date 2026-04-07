@@ -16,6 +16,7 @@ import {
   filterBoardColumns,
   hasActiveBoardFilters,
 } from "@/features/board/filters";
+import { getBoardStats } from "@/features/board/stats";
 import type {
   Column,
   CreateTaskInput,
@@ -78,6 +79,7 @@ const BoardScene = ({
     () => filteredColumns.some((column) => column.cards.length > 0),
     [filteredColumns],
   );
+  const boardStats = useMemo(() => getBoardStats(columns), [columns]);
 
   const activeTask =
     activeTaskId === null
@@ -188,9 +190,25 @@ const BoardScene = ({
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-2">
           <span className="font-display text-sm tracking-[0.15em] text-foreground/58">
             改善
           </span>
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <span className="border border-border/18 bg-background/40 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-muted-foreground/58">
+              {boardStats.totalTasks} total
+            </span>
+            <span className="border border-olive/14 bg-olive/6 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-olive/62">
+              {boardStats.doneTasks} done
+            </span>
+            <span className="border border-seal/16 bg-seal/6 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-seal/66">
+              {boardStats.overdueTasks} overdue
+            </span>
+            <span className="border border-border/18 bg-background/40 px-2 py-1 text-[9px] font-body uppercase tracking-[0.14em] text-muted-foreground/54">
+              {boardStats.inProgressTasks} in progress
+            </span>
+          </div>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3">
             {statusText && (
               <span
