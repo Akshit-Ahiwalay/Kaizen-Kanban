@@ -41,6 +41,29 @@ export interface Database {
           created_at?: string;
         };
       };
+      profiles: {
+        Row: {
+          id: string;
+          email: string | null;
+          display_name: string | null;
+          avatar_url: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          email?: string | null;
+          display_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string | null;
+          display_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+        };
+      };
       team_members: {
         Row: {
           id: string;

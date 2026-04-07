@@ -23,7 +23,15 @@ import {
 import { createInitialTeamMembers } from "@/features/team/data";
 import { createTeamMember } from "@/features/team/mutations";
 import { createTeamMemberForUser, fetchTeamMembersForUser } from "@/features/team/persistence";
-import { ensureAnonymousSession } from "@/integrations/supabase/auth";
+import { ensureProfileForUser } from "@/features/profile/persistence";
+import type { AppProfile } from "@/features/profile/types";
+import {
+  continueAsGuest,
+  getCurrentSession,
+  sendMagicLink,
+  signInWithGoogle,
+  signOutSession,
+} from "@/integrations/supabase/auth";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 
 type AppState = "landing" | "revealing" | "board";
@@ -44,10 +52,13 @@ const Index = () => {
     shouldUseSupabase ? [] : createInitialTeamMembers,
   );
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<AppProfile | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(shouldUseSupabase);
+  const [isAuthActionLoading, setIsAuthActionLoading] = useState(false);
   const [isBoardLoading, setIsBoardLoading] = useState(shouldUseSupabase);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [authFeedback, setAuthFeedback] = useState<string | null>(null);
 
   const handleEnter = useCallback(() => {
     setState("revealing");
@@ -55,6 +66,79 @@ const Index = () => {
 
   const handleRevealComplete = useCallback(() => {
     setState("board");
+  }, []);
+
+  const handleContinueAsGuest = useCallback(async () => {
+    if (!shouldUseSupabase) {
+      handleEnter();
+      return;
+    }
+
+    setIsAuthActionLoading(true);
+    setAuthFeedback(null);
+
+    try {
+      await continueAsGuest();
+      handleEnter();
+    } catch {
+      setAuthFeedback("Guest auth unavailable");
+    } finally {
+      setIsAuthActionLoading(false);
+    }
+  }, [handleEnter]);
+
+  const handleContinueWithGoogle = useCallback(async () => {
+    if (!shouldUseSupabase) {
+      return;
+    }
+
+    setIsAuthActionLoading(true);
+    setAuthFeedback(null);
+
+    try {
+      await signInWithGoogle();
+    } catch {
+      setAuthFeedback("Google sign-in unavailable");
+      setIsAuthActionLoading(false);
+      return;
+    }
+
+    setIsAuthActionLoading(false);
+  }, []);
+
+  const handleSendMagicLink = useCallback(async (email: string) => {
+    if (!shouldUseSupabase) {
+      return false;
+    }
+
+    setIsAuthActionLoading(true);
+    setAuthFeedback(null);
+
+    try {
+      await sendMagicLink(email);
+      setAuthFeedback("Magic link sent");
+      return true;
+    } catch {
+      setAuthFeedback("Magic link unavailable");
+      return false;
+    } finally {
+      setIsAuthActionLoading(false);
+    }
+  }, []);
+
+  const handleSignOut = useCallback(async () => {
+    if (!shouldUseSupabase) {
+      return;
+    }
+
+    try {
+      await signOutSession();
+      setState("landing");
+      setSyncError(null);
+      setAuthFeedback(null);
+    } catch {
+      setSyncError("Sign-out issue");
+    }
   }, []);
 
   const handleCreateTask = useCallback(
@@ -236,28 +320,36 @@ const Index = () => {
 
     let isMounted = true;
 
-    const syncSession = async () => {
+    const applySession = async (nextSession: Session | null) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setSession(nextSession);
+      setUserId(nextSession?.user.id ?? null);
+
+      if (!nextSession?.user || nextSession.user.is_anonymous) {
+        setProfile(null);
+        setAuthFeedback(null);
+        return;
+      }
+
       try {
-        const activeSession = await ensureAnonymousSession();
+        const nextProfile = await ensureProfileForUser(nextSession.user);
 
         if (!isMounted) {
           return;
         }
 
-        setSession(activeSession);
-        setUserId(activeSession?.user.id ?? null);
-        setSyncError(null);
+        setProfile(nextProfile);
+        setAuthFeedback(null);
       } catch {
         if (!isMounted) {
           return;
         }
 
-        setSyncError("Guest auth unavailable");
-        setIsBoardLoading(false);
-      } finally {
-        if (isMounted) {
-          setIsAuthLoading(false);
-        }
+        setProfile(null);
+        setAuthFeedback("Profile unavailable");
       }
     };
 
@@ -265,16 +357,28 @@ const Index = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, nextSession: Session | null) => {
+        void applySession(nextSession);
+      },
+    );
+
+    void (async () => {
+      try {
+        const currentSession = await getCurrentSession();
+
+        await applySession(currentSession);
+      } catch {
         if (!isMounted) {
           return;
         }
 
-        setSession(nextSession);
-        setUserId(nextSession?.user.id ?? null);
-      },
-    );
-
-    void syncSession();
+        setAuthFeedback("Auth unavailable");
+        setIsBoardLoading(false);
+      } finally {
+        if (isMounted) {
+          setIsAuthLoading(false);
+        }
+      }
+    })();
 
     return () => {
       isMounted = false;
@@ -349,12 +453,8 @@ const Index = () => {
       return "Syncing";
     }
 
-    if (session?.user?.is_anonymous) {
-      return "Guest";
-    }
-
     return null;
-  }, [isAuthLoading, isBoardLoading, session?.user?.is_anonymous, syncError]);
+  }, [isAuthLoading, isBoardLoading, syncError]);
 
   const boardStatusTone = useMemo(() => {
     if (!shouldUseSupabase) {
@@ -369,12 +469,24 @@ const Index = () => {
       return "loading" as const;
     }
 
+    return null;
+  }, [isAuthLoading, isBoardLoading, syncError]);
+
+  const accountLabel = useMemo(() => {
     if (session?.user?.is_anonymous) {
-      return "guest" as const;
+      return "Guest";
     }
 
-    return null;
-  }, [isAuthLoading, isBoardLoading, session?.user?.is_anonymous, syncError]);
+    return profile?.displayName ?? session?.user?.email ?? null;
+  }, [profile?.displayName, session?.user?.email, session?.user?.is_anonymous]);
+
+  const accountDetail = useMemo(() => {
+    if (session?.user?.is_anonymous) {
+      return "Anonymous access";
+    }
+
+    return profile?.email ?? session?.user?.email ?? null;
+  }, [profile?.email, session?.user?.email, session?.user?.is_anonymous]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -391,6 +503,11 @@ const Index = () => {
           onDeleteTask={handleDeleteTask}
           statusText={boardStatusText}
           statusTone={boardStatusTone}
+          accountLabel={accountLabel}
+          accountDetail={accountDetail}
+          accountAvatarUrl={profile?.avatarUrl ?? null}
+          isGuestSession={session?.user?.is_anonymous ?? false}
+          onSignOut={handleSignOut}
           canCreateTask={!shouldUseSupabase || !!userId}
           isBoardLoading={isAuthLoading || isBoardLoading}
         />
@@ -416,7 +533,18 @@ const Index = () => {
             }
           }}
         >
-          <LandingScreen onEnter={handleEnter} />
+          <LandingScreen
+            onEnter={handleEnter}
+            canUseSupabase={shouldUseSupabase}
+            hasSession={!!session}
+            isGuestSession={session?.user?.is_anonymous ?? false}
+            accountLabel={accountLabel}
+            authFeedback={authFeedback}
+            isAuthBusy={isAuthLoading || isAuthActionLoading}
+            onContinueAsGuest={handleContinueAsGuest}
+            onContinueWithGoogle={handleContinueWithGoogle}
+            onSendMagicLink={handleSendMagicLink}
+          />
         </div>
       )}
 

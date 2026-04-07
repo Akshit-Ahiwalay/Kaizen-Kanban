@@ -28,6 +28,7 @@ import type {
   UpdateTaskInput,
 } from "@/features/board/types";
 import BoardColumn from "./BoardColumn";
+import AccountMenu from "./AccountMenu";
 import CreateTaskDialog from "./CreateTaskDialog";
 import SamuraiSilhouette from "./SamuraiSilhouette";
 import TaskCard from "./TaskCard";
@@ -45,6 +46,11 @@ interface BoardSceneProps {
   onDeleteTask: (taskId: string) => Promise<boolean>;
   statusText?: string | null;
   statusTone?: "loading" | "guest" | "error" | null;
+  accountLabel?: string | null;
+  accountDetail?: string | null;
+  accountAvatarUrl?: string | null;
+  isGuestSession?: boolean;
+  onSignOut: () => Promise<void> | void;
   canCreateTask?: boolean;
   isBoardLoading?: boolean;
 }
@@ -60,6 +66,11 @@ const BoardScene = ({
   onDeleteTask,
   statusText = null,
   statusTone = null,
+  accountLabel = null,
+  accountDetail = null,
+  accountAvatarUrl = null,
+  isGuestSession = false,
+  onSignOut,
   canCreateTask = true,
   isBoardLoading = false,
 }: BoardSceneProps) => {
@@ -244,6 +255,15 @@ const BoardScene = ({
                 <span>{statusText}</span>
               </span>
             )}
+            {accountLabel && (
+              <AccountMenu
+                label={accountLabel}
+                detail={accountDetail}
+                avatarUrl={accountAvatarUrl}
+                isGuest={isGuestSession}
+                onSignOut={onSignOut}
+              />
+            )}
             <button
               type="button"
               aria-label="Manage team members"
@@ -297,7 +317,7 @@ const BoardScene = ({
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2 border border-border/22 bg-background/55 px-3 py-2">
                   <SlidersHorizontal size={12} className="text-muted-foreground/42" />
                   <select

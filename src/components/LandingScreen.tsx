@@ -1,11 +1,31 @@
 import { motion } from "framer-motion";
-import EnterButton from "./EnterButton";
+import LandingAuthPanel from "./LandingAuthPanel";
 
 interface LandingScreenProps {
   onEnter: () => void;
+  canUseSupabase: boolean;
+  hasSession: boolean;
+  isGuestSession: boolean;
+  accountLabel?: string | null;
+  authFeedback?: string | null;
+  isAuthBusy?: boolean;
+  onContinueAsGuest: () => Promise<void> | void;
+  onContinueWithGoogle: () => Promise<void> | void;
+  onSendMagicLink: (email: string) => Promise<boolean>;
 }
 
-const LandingScreen = ({ onEnter }: LandingScreenProps) => {
+const LandingScreen = ({
+  onEnter,
+  canUseSupabase,
+  hasSession,
+  isGuestSession,
+  accountLabel = null,
+  authFeedback = null,
+  isAuthBusy = false,
+  onContinueAsGuest,
+  onContinueWithGoogle,
+  onSendMagicLink,
+}: LandingScreenProps) => {
   return (
     <div className="h-full w-full flex flex-col items-center justify-center bg-background relative">
       {/* Main calligraphy composition */}
@@ -75,13 +95,24 @@ const LandingScreen = ({ onEnter }: LandingScreenProps) => {
           transition={{ duration: 0.8, delay: 0.9 }}
         />
 
-        {/* Enter button */}
+        {/* Auth surface */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.2 }}
         >
-          <EnterButton onClick={onEnter} />
+          <LandingAuthPanel
+            canUseSupabase={canUseSupabase}
+            hasSession={hasSession}
+            isGuestSession={isGuestSession}
+            accountLabel={accountLabel}
+            feedback={authFeedback}
+            isBusy={isAuthBusy}
+            onEnter={onEnter}
+            onContinueAsGuest={onContinueAsGuest}
+            onContinueWithGoogle={onContinueWithGoogle}
+            onSendMagicLink={onSendMagicLink}
+          />
         </motion.div>
       </motion.div>
 

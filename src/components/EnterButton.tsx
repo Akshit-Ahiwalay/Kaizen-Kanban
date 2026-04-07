@@ -2,20 +2,25 @@ import { useState } from "react";
 
 interface EnterButtonProps {
   onClick: () => void;
+  disabled?: boolean;
 }
 
 const SPRITE_URL =
   "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/urban-sprite.png";
 const STEPS = 29;
 
-const EnterButton = ({ onClick }: EnterButtonProps) => {
+const EnterButton = ({ onClick, disabled = false }: EnterButtonProps) => {
   const [hovered, setHovered] = useState(false);
 
   return (
     <div
-      className="relative overflow-hidden border border-foreground/10"
+      className={`relative overflow-hidden border ${disabled ? "border-foreground/6 opacity-50" : "border-foreground/10"}`}
       style={{ width: 140, height: 48 }}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        if (!disabled) {
+          setHovered(true);
+        }
+      }}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Static label underneath */}
@@ -25,15 +30,22 @@ const EnterButton = ({ onClick }: EnterButtonProps) => {
 
       {/* Mask-animated fill layer */}
       <button
-        onClick={onClick}
-        className="relative z-10 w-full h-full cursor-pointer border-none font-display text-xs tracking-[0.3em] text-primary-foreground"
+        onClick={() => {
+          if (!disabled) {
+            onClick();
+          }
+        }}
+        disabled={disabled}
+        className="relative z-10 w-full h-full cursor-pointer border-none font-display text-xs tracking-[0.3em] text-primary-foreground disabled:cursor-not-allowed"
         style={{
           background: "hsl(var(--foreground))",
           WebkitMask: `url(${SPRITE_URL})`,
           mask: `url(${SPRITE_URL})`,
           WebkitMaskSize: `${STEPS * 100 + 100}% 100%`,
           maskSize: `${STEPS * 100 + 100}% 100%`,
-          animation: hovered
+          animation: disabled
+            ? undefined
+            : hovered
             ? `mask-reveal 0.7s steps(${STEPS}) forwards`
             : `mask-hide 0.7s steps(${STEPS}) forwards`,
         }}
