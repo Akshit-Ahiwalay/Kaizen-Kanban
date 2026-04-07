@@ -33,6 +33,8 @@ import CreateTaskDialog from "./CreateTaskDialog";
 import TaskCard from "./TaskCard";
 import TaskDetailDialog from "./TaskDetailDialog";
 import TeamMembersDialog from "./TeamMembersDialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BoardSceneProps {
   columns: Column[];
@@ -185,6 +187,8 @@ const BoardScene = ({
       : statusTone === "loading"
         ? "border-border/28 bg-background/62 text-muted-foreground/66"
         : "border-olive/18 bg-olive/6 text-olive/66";
+  const filterSelectClassName =
+    "min-w-[168px] border-border/28 bg-[hsl(var(--background)/0.74)] text-[12px] uppercase tracking-[0.12em] text-foreground/74 shadow-[inset_0_1px_0_hsl(var(--background)/0.62)]";
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-background">
@@ -290,106 +294,120 @@ const BoardScene = ({
 
           {isFilterTrayVisible && (
             <motion.div
-              className="mt-5 flex flex-wrap items-center gap-2.5 border border-border/24 bg-background/46 px-4 py-4 backdrop-blur-[2px]"
+              className="mt-5 border border-border/22 bg-[hsl(var(--background)/0.54)] px-4 py-4 shadow-[inset_0_1px_0_hsl(var(--background)/0.58)] backdrop-blur-[6px] sm:px-5"
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex min-w-[260px] flex-1 items-center gap-2.5 border border-border/24 bg-background/60 px-4 py-3">
-                <Search size={14} className="text-muted-foreground/52" />
-                <input
-                  aria-label="Search task titles"
-                  value={filters.search}
-                  onChange={(event) =>
-                    setFilters((current) => ({ ...current, search: event.target.value }))
-                  }
-                  placeholder="Search titles"
-                  className="w-full bg-transparent font-body text-[14px] text-foreground/82 outline-none placeholder:text-muted-foreground/44"
-                />
+              <div className="flex flex-col gap-3.5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                  <div className="relative min-w-[260px] flex-1">
+                    <Search
+                      size={14}
+                      className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground/50"
+                    />
+                    <Input
+                      aria-label="Search task titles"
+                      value={filters.search}
+                      onChange={(event) =>
+                        setFilters((current) => ({ ...current, search: event.target.value }))
+                      }
+                      placeholder="Search titles"
+                      className="border-border/28 bg-[hsl(var(--background)/0.74)] pl-10 text-[14px] shadow-[inset_0_1px_0_hsl(var(--background)/0.62)]"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 pr-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground/52">
+                      <SlidersHorizontal size={13} />
+                      <span>Filters</span>
+                    </div>
+
+                    <Select
+                      value={filters.priority}
+                      onValueChange={(value) =>
+                        setFilters((current) => ({
+                          ...current,
+                          priority: value as typeof current.priority,
+                        }))
+                      }
+                    >
+                      <SelectTrigger aria-label="Filter by priority" className={filterSelectClassName}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All priorities</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={filters.status}
+                      onValueChange={(value) =>
+                        setFilters((current) => ({
+                          ...current,
+                          status: value as typeof current.status,
+                        }))
+                      }
+                    >
+                      <SelectTrigger aria-label="Filter by status" className={filterSelectClassName}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All statuses</SelectItem>
+                        <SelectItem value="todo">To Do</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="in-review">In Review</SelectItem>
+                        <SelectItem value="done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={filters.assigneeId}
+                      onValueChange={(value) =>
+                        setFilters((current) => ({
+                          ...current,
+                          assigneeId: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger aria-label="Filter by assignee" className={filterSelectClassName}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL_ASSIGNEES_FILTER}>All assignees</SelectItem>
+                        <SelectItem value={UNASSIGNED_ASSIGNEE_FILTER}>Unassigned</SelectItem>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {hasActiveFilters && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/14 pt-3">
+                    <div className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/50">
+                      {hasActiveFilters && !hasVisibleResults ? "No matching tasks" : " "}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="px-2 py-1.5 font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground/78"
+                      onClick={() => {
+                        setFilters(DEFAULT_BOARD_FILTERS);
+                        setIsFilterTrayOpen(false);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
               </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2.5 border border-border/24 bg-background/60 px-4 py-3">
-                  <SlidersHorizontal size={14} className="text-muted-foreground/52" />
-                  <select
-                    aria-label="Filter by priority"
-                    value={filters.priority}
-                    onChange={(event) =>
-                      setFilters((current) => ({
-                        ...current,
-                        priority: event.target.value as typeof current.priority,
-                      }))
-                    }
-                    className="bg-transparent font-body text-[12px] uppercase tracking-[0.12em] text-foreground/76 outline-none"
-                  >
-                    <option value="all">All priorities</option>
-                    <option value="high">High</option>
-                    <option value="normal">Normal</option>
-                    <option value="low">Low</option>
-                  </select>
-                </div>
-
-                <div className="border border-border/24 bg-background/60 px-4 py-3">
-                  <select
-                    aria-label="Filter by status"
-                    value={filters.status}
-                    onChange={(event) =>
-                      setFilters((current) => ({
-                        ...current,
-                        status: event.target.value as typeof current.status,
-                      }))
-                    }
-                    className="bg-transparent font-body text-[12px] uppercase tracking-[0.12em] text-foreground/76 outline-none"
-                  >
-                    <option value="all">All statuses</option>
-                    <option value="todo">To Do</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="in-review">In Review</option>
-                    <option value="done">Done</option>
-                  </select>
-                </div>
-
-                <div className="border border-border/24 bg-background/60 px-4 py-3">
-                  <select
-                    aria-label="Filter by assignee"
-                    value={filters.assigneeId}
-                    onChange={(event) =>
-                      setFilters((current) => ({
-                        ...current,
-                        assigneeId: event.target.value,
-                      }))
-                    }
-                    className="bg-transparent font-body text-[12px] uppercase tracking-[0.12em] text-foreground/76 outline-none"
-                  >
-                    <option value={ALL_ASSIGNEES_FILTER}>All assignees</option>
-                    <option value={UNASSIGNED_ASSIGNEE_FILTER}>Unassigned</option>
-                    {teamMembers.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  className="px-2 py-1.5 font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground/78"
-                  onClick={() => {
-                    setFilters(DEFAULT_BOARD_FILTERS);
-                    setIsFilterTrayOpen(false);
-                  }}
-                >
-                  Clear
-                </button>
-              )}
-
-              {hasActiveFilters && !hasVisibleResults && (
-                <span className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/50">
-                  No matching tasks
-                </span>
-              )}
             </motion.div>
           )}
           </div>

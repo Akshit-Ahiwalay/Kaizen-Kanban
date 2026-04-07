@@ -1,5 +1,6 @@
 import { useState } from "react";
 import EnterButton from "./EnterButton";
+import { Input } from "@/components/ui/input";
 
 interface LandingAuthPanelProps {
   canUseSupabase: boolean;
@@ -58,7 +59,7 @@ const LandingAuthPanel = ({
 
   if (!canUseSupabase) {
     return (
-      <div className="flex flex-col items-center gap-3.5">
+      <div className="flex flex-col items-center gap-4 border border-border/18 bg-[hsl(var(--background)/0.42)] px-6 py-6 shadow-[inset_0_1px_0_hsl(var(--background)/0.54)]">
         <EnterButton onClick={onEnter} />
         <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           Local board
@@ -69,13 +70,13 @@ const LandingAuthPanel = ({
 
   if (hasSession) {
     return (
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-6 py-6 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)]">
         <EnterButton onClick={onEnter} disabled={isBusy} />
         <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           {isGuestSession ? "Guest access ready" : "Signed in"}
         </p>
         {accountLabel && !isGuestSession && (
-          <p className="font-body text-[13px] text-muted-foreground/62">
+          <p className="max-w-[18rem] font-body text-[13px] leading-relaxed text-muted-foreground/62">
             {accountLabel}
           </p>
         )}
@@ -89,29 +90,38 @@ const LandingAuthPanel = ({
   }
 
   return (
-    <div className="flex w-full max-w-[25rem] flex-col items-center gap-4">
-      <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full max-w-[26.5rem] flex-col items-center gap-4">
+      <div className="flex w-full flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.38)] px-6 py-6 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)]">
         <EnterButton onClick={() => void onContinueAsGuest()} disabled={isBusy || isSendingLink} />
         <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           Continue as guest
         </p>
+        <p className="max-w-[18rem] font-body text-[13px] leading-relaxed text-muted-foreground/58">
+          Open the board immediately with local persistence and the full task flow.
+        </p>
       </div>
 
-      <div className="flex w-full flex-col gap-3 border border-border/22 bg-background/42 px-5 py-5">
-        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/44">
-          Or sign in
-        </p>
+      <div className="flex w-full flex-col gap-4 border border-border/20 bg-[hsl(var(--background)/0.46)] px-6 py-6 shadow-[inset_0_1px_0_hsl(var(--background)/0.56)]">
+        <div className="space-y-1.5 text-center">
+          <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/44">
+            Or sign in
+          </p>
+          <p className="font-body text-[13px] leading-relaxed text-muted-foreground/58">
+            Sync your board with Google or a magic link.
+          </p>
+        </div>
+
         <button
           type="button"
-          className="border border-border/30 px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/74 transition-all duration-300 hover:border-border/50 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+          className="border border-border/30 bg-[hsl(var(--background)/0.42)] px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/74 transition-all duration-300 hover:border-border/50 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
           onClick={() => void onContinueWithGoogle()}
           disabled={isBusy || isSendingLink}
         >
           Continue with Google
         </button>
 
-        <form className="flex flex-col gap-2.5" onSubmit={handleSendMagicLink}>
-          <input
+        <form className="flex flex-col gap-3" onSubmit={handleSendMagicLink}>
+          <Input
             aria-label="Email for magic link"
             type="email"
             value={email}
@@ -122,12 +132,11 @@ const LandingAuthPanel = ({
               }
             }}
             placeholder="Email address"
-            className="w-full border border-border/26 bg-background/58 px-3.5 py-2.5 font-body text-[14px] text-foreground/82 outline-none placeholder:text-muted-foreground/42 focus:border-border/50"
             disabled={isBusy || isSendingLink}
           />
           <button
             type="submit"
-            className="border border-border/26 px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/46 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+            className="border border-border/26 bg-[hsl(var(--background)/0.42)] px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/46 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
             disabled={isBusy || isSendingLink}
           >
             {isSendingLink ? "Sending..." : "Email me a magic link"}

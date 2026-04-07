@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import type { CreateTaskInput, KanbanPriority } from "@/features/board/types";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -21,6 +24,10 @@ const initialDraft: TaskDraft = {
   priority: "",
   dueDate: "",
 };
+const fieldLabelClassName =
+  "block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66";
+const modalSelectClassName =
+  "h-11 w-full appearance-none rounded-[0.6rem] border border-border/34 bg-[hsl(var(--background)/0.66)] px-3.5 pr-10 font-body text-[14px] text-foreground/82 shadow-[inset_0_1px_0_hsl(var(--background)/0.58)] transition-[border-color,background-color,box-shadow,color] duration-200 hover:border-border/46 focus:border-foreground/16 focus:bg-[hsl(var(--background)/0.82)] focus:outline-none focus:shadow-[inset_0_1px_0_hsl(var(--background)/0.8),0_0_0_1px_hsl(var(--olive)/0.16)]";
 
 const CreateTaskDialog = ({
   open,
@@ -62,7 +69,7 @@ const CreateTaskDialog = ({
   };
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-foreground/10 px-4 py-8 backdrop-blur-[2px]">
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-foreground/12 px-4 py-8 backdrop-blur-[3px]">
       <button
         type="button"
         className="absolute inset-0 cursor-default"
@@ -70,14 +77,14 @@ const CreateTaskDialog = ({
         aria-label="Close new task dialog"
       />
 
-      <div className="relative z-10 w-full max-w-lg border border-border/36 bg-background/95 p-7 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)] sm:p-8">
-        <div className="mb-7 flex items-start justify-between gap-4">
+      <div className="relative z-10 w-full max-w-lg border border-border/30 bg-[hsl(var(--background)/0.96)] p-7 shadow-[0_28px_90px_-48px_rgba(0,0,0,0.42)] backdrop-blur-[10px] sm:p-8">
+        <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <p className="font-display text-[11px] tracking-[0.32em] text-muted-foreground/56">
               TASK ENTRY
             </p>
-            <h2 className="mt-2.5 font-display text-[28px] text-foreground/84">New Task</h2>
-            <p className="mt-2.5 max-w-sm font-body text-[13px] leading-relaxed text-muted-foreground/58">
+            <h2 className="mt-3 font-display text-[28px] text-foreground/84">New Task</h2>
+            <p className="mt-3 max-w-sm font-body text-[13px] leading-relaxed text-muted-foreground/58">
               New items appear in the To Do column and sync into your guest workspace.
             </p>
           </div>
@@ -90,15 +97,12 @@ const CreateTaskDialog = ({
           </button>
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <div>
-            <label
-              htmlFor="task-title"
-              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
-            >
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-2.5">
+            <label htmlFor="task-title" className={fieldLabelClassName}>
               Title
             </label>
-            <input
+            <Input
               id="task-title"
               autoFocus
               value={draft.title}
@@ -108,7 +112,6 @@ const CreateTaskDialog = ({
                   setTitleError("");
                 }
               }}
-              className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[15px] text-foreground/84 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
               placeholder="Write a task title"
             />
             {titleError && (
@@ -116,71 +119,74 @@ const CreateTaskDialog = ({
             )}
           </div>
 
-          <div>
-            <label
-              htmlFor="task-description"
-              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
-            >
+          <div className="space-y-2.5">
+            <label htmlFor="task-description" className={fieldLabelClassName}>
               Description
             </label>
-            <textarea
+            <Textarea
               id="task-description"
               value={draft.description}
               onChange={(event) =>
                 setDraft((current) => ({ ...current, description: event.target.value }))
               }
               rows={4}
-              className="w-full resize-none border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
+              className="min-h-[120px] resize-none"
               placeholder="Optional context"
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="task-priority"
-                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
-              >
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="space-y-2.5">
+              <label htmlFor="task-priority" className={fieldLabelClassName}>
                 Priority
               </label>
-              <select
-                id="task-priority"
-                value={draft.priority}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    priority: event.target.value as TaskDraft["priority"],
-                  }))
-                }
-                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
-              >
-                <option value="">None</option>
-                <option value="low">Low</option>
-                <option value="normal">Normal</option>
-                <option value="high">High</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="task-priority"
+                  value={draft.priority}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      priority: event.target.value as TaskDraft["priority"],
+                    }))
+                  }
+                  className={modalSelectClassName}
+                >
+                  <option value="">None</option>
+                  <option value="low">Low</option>
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/52"
+                />
+              </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="task-due-date"
-                className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
-              >
+            <div className="space-y-2.5">
+              <label htmlFor="task-due-date" className={fieldLabelClassName}>
                 Due Date
               </label>
-              <input
-                id="task-due-date"
-                type="date"
-                value={draft.dueDate}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, dueDate: event.target.value }))
-                }
-                className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[14px] text-foreground/82 outline-none transition-colors duration-300 focus:border-border/62"
-              />
+              <div className="relative">
+                <Input
+                  id="task-due-date"
+                  type="date"
+                  value={draft.dueDate}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, dueDate: event.target.value }))
+                  }
+                  className="date-input pr-11"
+                />
+                <CalendarDays
+                  size={16}
+                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/52"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4">
+          <div className="flex items-center justify-end gap-3 border-t border-border/18 pt-5">
             <button
               type="button"
               className="px-3 py-2 text-[11px] font-body uppercase tracking-[0.18em] text-muted-foreground/64 transition-colors duration-300 hover:text-foreground"
@@ -190,7 +196,7 @@ const CreateTaskDialog = ({
             </button>
             <button
               type="submit"
-              className="border border-border/32 px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground"
+              className="border border-border/32 bg-[hsl(var(--background)/0.42)] px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground"
             >
               {submitLabel}
             </button>

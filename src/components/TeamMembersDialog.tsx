@@ -6,6 +6,7 @@ import {
   getInitials,
   withAlpha,
 } from "@/features/team/types";
+import { Input } from "@/components/ui/input";
 
 interface TeamMembersDialogProps {
   open: boolean;
@@ -13,6 +14,8 @@ interface TeamMembersDialogProps {
   onOpenChange: (open: boolean) => void;
   onCreateMember: (input: CreateTeamMemberInput) => Promise<boolean>;
 }
+const fieldLabelClassName =
+  "block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66";
 
 const TeamMembersDialog = ({
   open,
@@ -70,7 +73,7 @@ const TeamMembersDialog = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-foreground/10 px-4 py-8 backdrop-blur-[2px]">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-foreground/12 px-4 py-8 backdrop-blur-[3px]">
       <button
         type="button"
         className="absolute inset-0 cursor-default"
@@ -78,13 +81,13 @@ const TeamMembersDialog = ({
         onClick={() => onOpenChange(false)}
       />
 
-      <div className="relative z-10 w-full max-w-lg border border-border/36 bg-background/95 p-7 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.45)] sm:p-8">
-        <div className="mb-7 flex items-start justify-between gap-4">
+      <div className="relative z-10 w-full max-w-lg border border-border/30 bg-[hsl(var(--background)/0.96)] p-7 shadow-[0_28px_90px_-48px_rgba(0,0,0,0.42)] backdrop-blur-[10px] sm:p-8">
+        <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <p className="font-display text-[11px] tracking-[0.32em] text-muted-foreground/56">
               TEAM
             </p>
-            <h2 className="mt-2.5 font-display text-[28px] text-foreground/84">Members</h2>
+            <h2 className="mt-3 font-display text-[28px] text-foreground/84">Members</h2>
           </div>
           <button
             type="button"
@@ -95,16 +98,16 @@ const TeamMembersDialog = ({
           </button>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2.5">
+        <div className="mb-7 flex flex-wrap gap-2.5">
           {members.length === 0 ? (
-            <div className="w-full border border-dashed border-border/24 bg-background/36 px-4 py-5 text-center font-body text-[13px] text-muted-foreground/60">
+            <div className="w-full border border-dashed border-border/24 bg-[hsl(var(--background)/0.48)] px-4 py-5 text-center font-body text-[13px] text-muted-foreground/60">
               No members yet
             </div>
           ) : (
             members.map((member) => (
               <div
                 key={member.id}
-                className="inline-flex items-center gap-2.5 border border-border/24 bg-background/45 px-3 py-2.5"
+                className="inline-flex items-center gap-2.5 border border-border/22 bg-[hsl(var(--background)/0.54)] px-3 py-2.5 shadow-[inset_0_1px_0_hsl(var(--background)/0.58)]"
               >
                 <span
                   className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-body uppercase tracking-[0.08em]"
@@ -122,15 +125,12 @@ const TeamMembersDialog = ({
           )}
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <div>
-            <label
-              htmlFor="team-member-name"
-              className="mb-2.5 block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66"
-            >
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-2.5">
+            <label htmlFor="team-member-name" className={fieldLabelClassName}>
               Name
             </label>
-            <input
+            <Input
               id="team-member-name"
               value={name}
               onChange={(event) => {
@@ -140,12 +140,11 @@ const TeamMembersDialog = ({
                 }
               }}
               placeholder="Member name"
-              className="w-full border border-border/32 bg-background/72 px-3.5 py-3 font-body text-[15px] text-foreground/84 outline-none transition-colors duration-300 placeholder:text-muted-foreground/40 focus:border-border/62"
             />
           </div>
 
-          <div>
-            <p className="mb-2.5 font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66">
+          <div className="space-y-2.5">
+            <p className={fieldLabelClassName}>
               Color
             </p>
             <div className="flex flex-wrap gap-2">
@@ -168,14 +167,14 @@ const TeamMembersDialog = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 pt-2">
+          <div className="flex items-center justify-between gap-3 border-t border-border/18 pt-5">
             <div className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/48">
               {error || (isSaving ? "Saving" : "")}
             </div>
             <button
               type="submit"
               disabled={isSaving}
-              className="border border-border/32 px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
+              className="border border-border/32 bg-[hsl(var(--background)/0.42)] px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
             >
               {isSaving ? "Saving..." : "Add Member"}
             </button>

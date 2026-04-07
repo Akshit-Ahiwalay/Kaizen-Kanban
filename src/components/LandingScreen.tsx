@@ -30,7 +30,7 @@ const LandingScreen = ({
     <div className="h-full w-full flex flex-col items-center justify-center bg-background relative">
       {/* Main calligraphy composition */}
       <motion.div
-        className="flex flex-col items-center gap-10"
+        className="flex flex-col items-center gap-11 px-4 sm:gap-12"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
@@ -97,6 +97,7 @@ const LandingScreen = ({
 
         {/* Auth surface */}
         <motion.div
+          className="w-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.2 }}
