@@ -10,6 +10,7 @@ export interface KanbanCard {
   dueDateValue?: string;
   priority?: KanbanPriority;
   done?: boolean;
+  sortOrder?: number;
 }
 
 export interface Column {

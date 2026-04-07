@@ -34,6 +34,22 @@ describe("board mutations", () => {
     ).toEqual(["4", "1", "5"]);
   });
 
+  it("reorders a task within the same column", () => {
+    const columns = createInitialBoardColumns();
+
+    const result = moveTask(columns, {
+      taskId: "1",
+      targetColumnId: "todo",
+      targetIndex: 1,
+    });
+
+    expect(result.find((column) => column.id === "todo")?.cards.map((card) => card.id)).toEqual([
+      "2",
+      "1",
+      "3",
+    ]);
+  });
+
   it("returns the original columns for safe no-op cases", () => {
     const columns = createInitialBoardColumns();
 
@@ -55,6 +71,14 @@ describe("board mutations", () => {
       moveTask(columns, {
         taskId: "1",
         targetColumnId: "todo",
+      }),
+    ).toBe(columns);
+
+    expect(
+      moveTask(columns, {
+        taskId: "1",
+        targetColumnId: "todo",
+        targetIndex: 0,
       }),
     ).toBe(columns);
   });

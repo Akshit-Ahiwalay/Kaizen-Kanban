@@ -30,6 +30,7 @@ const mapTaskRowToCard = (row: TaskRow): KanbanCard => ({
   dueDateValue: row.due_date ?? undefined,
   dueDate: formatDueDate(row.due_date ?? undefined),
   done: row.status === "done",
+  sortOrder: row.sort_order,
 });
 
 const mapRowsToColumns = (rows: TaskRow[]): Column[] => {
@@ -54,6 +55,7 @@ const buildTaskInsert = (task: KanbanCard, userId: string): TaskInsert => ({
   status: "todo",
   priority: task.priority ?? null,
   due_date: task.dueDateValue ?? null,
+  sort_order: task.sortOrder ?? 0,
   user_id: userId,
 });
 
@@ -65,6 +67,27 @@ const buildTaskUpdate = (task: UpdateTaskInput): TaskUpdate => ({
   due_date: task.dueDate ?? null,
 });
 
+const buildTaskOrderUpdates = (
+  columns: Column[],
+  columnIds: BoardColumnId[],
+) => {
+  const uniqueColumnIds = Array.from(new Set(columnIds));
+
+  return uniqueColumnIds.flatMap((columnId) => {
+    const column = columns.find((entry) => entry.id === columnId);
+
+    if (!column) {
+      return [];
+    }
+
+    return column.cards.map((card, index) => ({
+      id: card.id,
+      status: COLUMN_ID_TO_STATUS[column.id],
+      sort_order: index,
+    }));
+  });
+};
+
 export const fetchBoardColumnsForUser = async (userId: string): Promise<Column[]> => {
   if (!supabase) {
     return createEmptyBoardColumns();
@@ -72,8 +95,9 @@ export const fetchBoardColumnsForUser = async (userId: string): Promise<Column[]
 
   const { data, error } = await supabase
     .from("tasks")
-    .select("id, title, description, status, priority, due_date, user_id, created_at")
+    .select("id, title, description, status, priority, due_date, sort_order, user_id, created_at")
     .eq("user_id", userId)
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -95,24 +119,33 @@ export const createTaskForUser = async (userId: string, task: KanbanCard) => {
   }
 };
 
-export const moveTaskForUser = async (
+export const syncTaskOrderForUser = async (
   userId: string,
-  taskId: string,
-  targetColumnId: BoardColumnId,
+  columns: Column[],
+  columnIds: BoardColumnId[],
 ) => {
   if (!supabase) {
     return;
   }
 
-  const { error } = await supabase
-    .from("tasks")
-    .update({ status: COLUMN_ID_TO_STATUS[targetColumnId] })
-    .eq("id", taskId)
-    .eq("user_id", userId);
+  const updates = buildTaskOrderUpdates(columns, columnIds);
 
-  if (error) {
-    throw error;
-  }
+  await Promise.all(
+    updates.map(async (update) => {
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          status: update.status,
+          sort_order: update.sort_order,
+        })
+        .eq("id", update.id)
+        .eq("user_id", userId);
+
+      if (error) {
+        throw error;
+      }
+    }),
+  );
 };
 
 export const updateTaskForUser = async (userId: string, task: UpdateTaskInput) => {

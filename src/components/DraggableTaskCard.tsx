@@ -1,4 +1,4 @@
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { KanbanCard } from "@/features/board/types";
 import TaskCard from "./TaskCard";
@@ -6,6 +6,7 @@ import TaskCard from "./TaskCard";
 interface DraggableTaskCardProps {
   card: KanbanCard;
   columnId: string;
+  index: number;
   delay: number;
   animateIn?: boolean;
   onSelectTask: (taskId: string) => void;
@@ -14,11 +15,12 @@ interface DraggableTaskCardProps {
 const DraggableTaskCard = ({
   card,
   columnId,
+  index,
   delay,
   animateIn = true,
   onSelectTask,
 }: DraggableTaskCardProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useDraggable({
+  const draggable = useDraggable({
     id: card.id,
     data: {
       type: "task",
@@ -26,6 +28,21 @@ const DraggableTaskCard = ({
       columnId,
     },
   });
+  const droppable = useDroppable({
+    id: `drop-${card.id}`,
+    data: {
+      type: "card",
+      taskId: card.id,
+      columnId,
+      index,
+    },
+  });
+  const { attributes, listeners, transform, transition, isDragging } = draggable;
+
+  const setNodeRef = (node: HTMLDivElement | null) => {
+    draggable.setNodeRef(node);
+    droppable.setNodeRef(node);
+  };
 
   return (
     <div
@@ -35,7 +52,7 @@ const DraggableTaskCard = ({
         transition,
         opacity: isDragging ? 0.2 : 1,
       }}
-      className="touch-none"
+      className={`touch-none ${droppable.isOver && !isDragging ? "ring-1 ring-border/20" : ""}`}
       role="button"
       tabIndex={0}
       aria-label={`Open task ${card.title}`}

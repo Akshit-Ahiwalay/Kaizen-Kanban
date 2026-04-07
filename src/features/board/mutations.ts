@@ -30,6 +30,7 @@ export const createTaskCard = (task: CreateTaskInput): KanbanCard => ({
   priority: task.priority,
   dueDateValue: task.dueDate,
   dueDate: formatDueDate(task.dueDate),
+  sortOrder: 0,
 });
 
 export const insertTaskIntoColumn = (
@@ -45,7 +46,13 @@ export const insertTaskIntoColumn = (
 
   return columns.map((column) =>
     column.id === resolvedColumnId
-      ? { ...column, cards: [task, ...column.cards] }
+      ? {
+          ...column,
+          cards: [
+            { ...task, sortOrder: 0 },
+            ...column.cards.map((card, index) => ({ ...card, sortOrder: index + 1 })),
+          ],
+        }
       : column,
   );
 };
@@ -77,7 +84,7 @@ export const moveTask = (
 
   const targetColumnIndex = columns.findIndex((column) => column.id === targetColumnId);
 
-  if (targetColumnIndex === -1 || sourceColumnIndex === targetColumnIndex) {
+  if (targetColumnIndex === -1) {
     return columns;
   }
 
@@ -93,6 +100,34 @@ export const moveTask = (
     ...sourceColumn.cards[taskIndex],
     done: targetColumn.id === "done",
   };
+
+  if (sourceColumnIndex === targetColumnIndex) {
+    if (targetIndex === undefined || targetIndex === taskIndex) {
+      return columns;
+    }
+
+    const nextCards = [...sourceColumn.cards];
+    nextCards.splice(taskIndex, 1);
+
+    const insertionIndex = clampTargetIndex(targetIndex, nextCards.length);
+    nextCards.splice(insertionIndex, 0, task);
+
+    const hasSameOrder = nextCards.every((card, index) => card.id === sourceColumn.cards[index]?.id);
+
+    if (hasSameOrder) {
+      return columns;
+    }
+
+    return columns.map((column, index) =>
+      index === sourceColumnIndex
+        ? {
+            ...column,
+            cards: nextCards.map((card, cardIndex) => ({ ...card, sortOrder: cardIndex })),
+          }
+        : column,
+    );
+  }
+
   const nextSourceCards = sourceColumn.cards.filter((card) => card.id !== taskId);
   const insertionIndex = clampTargetIndex(targetIndex, targetColumn.cards.length);
   const nextTargetCards = [...targetColumn.cards];
@@ -101,11 +136,17 @@ export const moveTask = (
 
   return columns.map((column, index) => {
     if (index === sourceColumnIndex) {
-      return { ...column, cards: nextSourceCards };
+      return {
+        ...column,
+        cards: nextSourceCards.map((card, cardIndex) => ({ ...card, sortOrder: cardIndex })),
+      };
     }
 
     if (index === targetColumnIndex) {
-      return { ...column, cards: nextTargetCards };
+      return {
+        ...column,
+        cards: nextTargetCards.map((card, cardIndex) => ({ ...card, sortOrder: cardIndex })),
+      };
     }
 
     return column;
@@ -155,7 +196,12 @@ export const updateTask = (
     );
 
     return columns.map((column, index) =>
-      index === sourceColumnIndex ? { ...column, cards: nextCards } : column,
+      index === sourceColumnIndex
+        ? {
+            ...column,
+            cards: nextCards.map((card, cardIndex) => ({ ...card, sortOrder: cardIndex })),
+          }
+        : column,
     );
   }
 
@@ -165,11 +211,17 @@ export const updateTask = (
 
   return columns.map((column, index) => {
     if (index === sourceColumnIndex) {
-      return { ...column, cards: nextSourceCards };
+      return {
+        ...column,
+        cards: nextSourceCards.map((card, cardIndex) => ({ ...card, sortOrder: cardIndex })),
+      };
     }
 
     if (index === targetColumnIndex) {
-      return { ...column, cards: nextTargetCards };
+      return {
+        ...column,
+        cards: nextTargetCards.map((card, cardIndex) => ({ ...card, sortOrder: cardIndex })),
+      };
     }
 
     return column;
@@ -193,6 +245,11 @@ export const deleteTask = (columns: Column[], taskId: string): Column[] => {
   }
 
   return columns.map((column, index) =>
-    index === sourceColumnIndex ? { ...column, cards: nextCards } : column,
+    index === sourceColumnIndex
+      ? {
+          ...column,
+          cards: nextCards.map((card, cardIndex) => ({ ...card, sortOrder: cardIndex })),
+        }
+      : column,
   );
 };

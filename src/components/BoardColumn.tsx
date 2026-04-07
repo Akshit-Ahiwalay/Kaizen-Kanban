@@ -96,6 +96,7 @@ const BoardColumn = ({
               key={card.id}
               card={card}
               columnId={column.id}
+              index={card.sortOrder ?? cardIndex}
               delay={0.5 + index * 0.1 + cardIndex * 0.06}
               animateIn={card.id !== recentlyMovedTaskId}
               onSelectTask={onSelectTask}

@@ -9,7 +9,7 @@ import {
   createTaskForUser,
   deleteTaskForUser,
   fetchBoardColumnsForUser,
-  moveTaskForUser,
+  syncTaskOrderForUser,
   updateTaskForUser,
 } from "@/features/board/persistence";
 import { ensureAnonymousSession } from "@/integrations/supabase/auth";
@@ -18,6 +18,9 @@ import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 type AppState = "landing" | "revealing" | "board";
 
 const shouldUseSupabase = isSupabaseConfigured && import.meta.env.MODE !== "test";
+
+const findTaskColumnId = (columns: Column[], taskId: string) =>
+  columns.find((column) => column.cards.some((card) => card.id === taskId))?.id ?? null;
 
 const Index = () => {
   const [state, setState] = useState<AppState>("landing");
@@ -42,10 +45,12 @@ const Index = () => {
     (task: CreateTaskInput) => {
       const newTask = createTaskCard(task);
       let previousColumns: Column[] | null = null;
+      let nextColumns: Column[] | null = null;
 
       setBoardColumns((currentColumns) => {
         previousColumns = currentColumns;
-        return insertTaskIntoColumn(currentColumns, newTask, "todo");
+        nextColumns = insertTaskIntoColumn(currentColumns, newTask, "todo");
+        return nextColumns;
       });
 
       if (!shouldUseSupabase || !userId) {
@@ -55,6 +60,9 @@ const Index = () => {
       void (async () => {
         try {
           await createTaskForUser(userId, newTask);
+          if (nextColumns) {
+            await syncTaskOrderForUser(userId, nextColumns, ["todo"]);
+          }
           setSyncError(null);
         } catch {
           if (previousColumns) {
@@ -70,10 +78,13 @@ const Index = () => {
   const handleMoveTask = useCallback(
     (taskMove: MoveTaskInput) => {
       let previousColumns: Column[] | null = null;
+      let nextColumns: Column[] | null = null;
+      let sourceColumnId: Column["id"] | null = null;
       let changed = false;
 
       setBoardColumns((currentColumns) => {
-        const nextColumns = moveTask(currentColumns, taskMove);
+        sourceColumnId = findTaskColumnId(currentColumns, taskMove.taskId);
+        nextColumns = moveTask(currentColumns, taskMove);
         previousColumns = currentColumns;
         changed = nextColumns !== currentColumns;
         return nextColumns;
@@ -85,7 +96,12 @@ const Index = () => {
 
       void (async () => {
         try {
-          await moveTaskForUser(userId, taskMove.taskId, taskMove.targetColumnId);
+          if (nextColumns && sourceColumnId) {
+            await syncTaskOrderForUser(userId, nextColumns, [
+              sourceColumnId,
+              taskMove.targetColumnId,
+            ]);
+          }
           setSyncError(null);
         } catch {
           if (previousColumns) {
@@ -101,10 +117,14 @@ const Index = () => {
   const handleUpdateTask = useCallback(
     async (taskUpdate: UpdateTaskInput) => {
       let previousColumns: Column[] | null = null;
+      let nextColumns: Column[] | null = null;
+      let previousStatus: Column["id"] | null = null;
 
       setBoardColumns((currentColumns) => {
         previousColumns = currentColumns;
-        return updateTask(currentColumns, taskUpdate);
+        previousStatus = findTaskColumnId(currentColumns, taskUpdate.taskId);
+        nextColumns = updateTask(currentColumns, taskUpdate);
+        return nextColumns;
       });
 
       if (!shouldUseSupabase || !userId) {
@@ -113,6 +133,9 @@ const Index = () => {
 
       try {
         await updateTaskForUser(userId, taskUpdate);
+        if (nextColumns && previousStatus && previousStatus !== taskUpdate.status) {
+          await syncTaskOrderForUser(userId, nextColumns, [previousStatus, taskUpdate.status]);
+        }
         setSyncError(null);
         return true;
       } catch {
@@ -129,10 +152,14 @@ const Index = () => {
   const handleDeleteTask = useCallback(
     async (taskId: string) => {
       let previousColumns: Column[] | null = null;
+      let nextColumns: Column[] | null = null;
+      let sourceColumnId: Column["id"] | null = null;
 
       setBoardColumns((currentColumns) => {
         previousColumns = currentColumns;
-        return deleteTask(currentColumns, taskId);
+        sourceColumnId = findTaskColumnId(currentColumns, taskId);
+        nextColumns = deleteTask(currentColumns, taskId);
+        return nextColumns;
       });
 
       if (!shouldUseSupabase || !userId) {
@@ -141,6 +168,9 @@ const Index = () => {
 
       try {
         await deleteTaskForUser(userId, taskId);
+        if (nextColumns && sourceColumnId) {
+          await syncTaskOrderForUser(userId, nextColumns, [sourceColumnId]);
+        }
         setSyncError(null);
         return true;
       } catch {

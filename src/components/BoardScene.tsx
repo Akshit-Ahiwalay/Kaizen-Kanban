@@ -135,10 +135,19 @@ const BoardScene = ({
     }
 
     const taskId = String(active.id);
-    const targetColumnId = String(over.id) as MoveTaskInput["targetColumnId"];
+    const overData = over.data.current;
+    const overType = overData?.type;
+    const targetColumnId =
+      overType === "card"
+        ? (overData.columnId as MoveTaskInput["targetColumnId"])
+        : (String(over.id) as MoveTaskInput["targetColumnId"]);
+    const targetIndex =
+      overType === "card"
+        ? Number(overData.index)
+        : undefined;
 
     setRecentlyMovedTaskId(taskId);
-    onMoveTask({ taskId, targetColumnId });
+    onMoveTask({ taskId, targetColumnId, targetIndex });
   };
 
   const handleSelectTask = (taskId: string) => {

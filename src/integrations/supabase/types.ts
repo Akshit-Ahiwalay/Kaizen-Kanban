@@ -11,6 +11,7 @@ export interface Database {
           status: TaskStatus;
           priority: KanbanPriority | null;
           due_date: string | null;
+          sort_order: number;
           user_id: string;
           created_at: string;
         };
@@ -21,6 +22,7 @@ export interface Database {
           status: TaskStatus;
           priority?: KanbanPriority | null;
           due_date?: string | null;
+          sort_order?: number;
           user_id: string;
           created_at?: string;
         };
@@ -31,6 +33,7 @@ export interface Database {
           status?: TaskStatus;
           priority?: KanbanPriority | null;
           due_date?: string | null;
+          sort_order?: number;
           user_id?: string;
           created_at?: string;
         };
