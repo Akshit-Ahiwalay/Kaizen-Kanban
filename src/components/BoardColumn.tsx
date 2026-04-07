@@ -11,6 +11,7 @@ interface BoardColumnProps {
   recentlyMovedTaskId?: string | null;
   isBoardLoading?: boolean;
   hasActiveFilters?: boolean;
+  onSelectTask: (taskId: string) => void;
 }
 
 const BoardColumn = ({
@@ -21,6 +22,7 @@ const BoardColumn = ({
   recentlyMovedTaskId,
   isBoardLoading = false,
   hasActiveFilters = false,
+  onSelectTask,
 }: BoardColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: column.id,
@@ -96,6 +98,7 @@ const BoardColumn = ({
               columnId={column.id}
               delay={0.5 + index * 0.1 + cardIndex * 0.06}
               animateIn={card.id !== recentlyMovedTaskId}
+              onSelectTask={onSelectTask}
             />
           ))}
       </div>

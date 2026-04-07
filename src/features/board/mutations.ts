@@ -1,4 +1,11 @@
-import type { BoardColumnId, Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "./types";
+import type {
+  BoardColumnId,
+  Column,
+  CreateTaskInput,
+  KanbanCard,
+  MoveTaskInput,
+  UpdateTaskInput,
+} from "./types";
 import { formatDueDate } from "./due-dates";
 
 const TODO_COLUMN_ID: BoardColumnId = "todo";
@@ -82,7 +89,10 @@ export const moveTask = (
     return columns;
   }
 
-  const task = sourceColumn.cards[taskIndex];
+  const task = {
+    ...sourceColumn.cards[taskIndex],
+    done: targetColumn.id === "done",
+  };
   const nextSourceCards = sourceColumn.cards.filter((card) => card.id !== taskId);
   const insertionIndex = clampTargetIndex(targetIndex, targetColumn.cards.length);
   const nextTargetCards = [...targetColumn.cards];
@@ -100,4 +110,89 @@ export const moveTask = (
 
     return column;
   });
+};
+
+export const updateTask = (
+  columns: Column[],
+  { taskId, title, description, priority, dueDate, status }: UpdateTaskInput,
+): Column[] => {
+  const sourceColumnIndex = columns.findIndex((column) =>
+    column.cards.some((card) => card.id === taskId),
+  );
+
+  if (sourceColumnIndex === -1) {
+    return columns;
+  }
+
+  const sourceColumn = columns[sourceColumnIndex];
+  const sourceTaskIndex = sourceColumn.cards.findIndex((card) => card.id === taskId);
+
+  if (sourceTaskIndex === -1) {
+    return columns;
+  }
+
+  const targetColumnId = resolveTargetColumnId(columns, status);
+  const targetColumnIndex = columns.findIndex((column) => column.id === targetColumnId);
+
+  if (targetColumnIndex === -1) {
+    return columns;
+  }
+
+  const currentTask = sourceColumn.cards[sourceTaskIndex];
+  const nextTask: KanbanCard = {
+    ...currentTask,
+    title,
+    description,
+    priority,
+    dueDateValue: dueDate,
+    dueDate: formatDueDate(dueDate),
+    done: targetColumnId === "done",
+  };
+
+  if (sourceColumnIndex === targetColumnIndex) {
+    const nextCards = sourceColumn.cards.map((card, index) =>
+      index === sourceTaskIndex ? nextTask : card,
+    );
+
+    return columns.map((column, index) =>
+      index === sourceColumnIndex ? { ...column, cards: nextCards } : column,
+    );
+  }
+
+  const nextSourceCards = sourceColumn.cards.filter((card) => card.id !== taskId);
+  const targetColumn = columns[targetColumnIndex];
+  const nextTargetCards = [nextTask, ...targetColumn.cards];
+
+  return columns.map((column, index) => {
+    if (index === sourceColumnIndex) {
+      return { ...column, cards: nextSourceCards };
+    }
+
+    if (index === targetColumnIndex) {
+      return { ...column, cards: nextTargetCards };
+    }
+
+    return column;
+  });
+};
+
+export const deleteTask = (columns: Column[], taskId: string): Column[] => {
+  const sourceColumnIndex = columns.findIndex((column) =>
+    column.cards.some((card) => card.id === taskId),
+  );
+
+  if (sourceColumnIndex === -1) {
+    return columns;
+  }
+
+  const sourceColumn = columns[sourceColumnIndex];
+  const nextCards = sourceColumn.cards.filter((card) => card.id !== taskId);
+
+  if (nextCards.length === sourceColumn.cards.length) {
+    return columns;
+  }
+
+  return columns.map((column, index) =>
+    index === sourceColumnIndex ? { ...column, cards: nextCards } : column,
+  );
 };

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { describe, expect, it } from "vitest";
 import Index from "@/pages/Index";
@@ -56,5 +56,44 @@ describe("Index page", () => {
 
     expect(screen.getByText("Write documentation")).toBeInTheDocument();
     expect(screen.queryByText("Content summary")).not.toBeInTheDocument();
+  });
+
+  it("opens a task and saves edited details", async () => {
+    render(createElement(Index));
+
+    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: /open task design landing page/i }));
+
+    fireEvent.change(screen.getByLabelText("Title"), {
+      target: { value: "Design landing page v2" },
+    });
+    fireEvent.change(screen.getByLabelText("Description"), {
+      target: { value: "Bring task editing into the flow." },
+    });
+    fireEvent.change(screen.getByLabelText("Priority"), {
+      target: { value: "normal" },
+    });
+    fireEvent.change(screen.getByLabelText("Status"), {
+      target: { value: "in-review" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    expect(await screen.findByText("Design landing page v2")).toBeInTheDocument();
+    expect(screen.queryByText("Design landing page")).not.toBeInTheDocument();
+  });
+
+  it("deletes a task from the detail dialog after confirmation", async () => {
+    render(createElement(Index));
+
+    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: /open task design landing page/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirm delete/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Edit Task")).not.toBeInTheDocument();
+      expect(screen.queryByText("Design landing page")).not.toBeInTheDocument();
+    });
   });
 });

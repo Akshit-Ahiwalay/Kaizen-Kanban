@@ -16,17 +16,26 @@ import {
   filterBoardColumns,
   hasActiveBoardFilters,
 } from "@/features/board/filters";
-import type { Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "@/features/board/types";
+import type {
+  Column,
+  CreateTaskInput,
+  KanbanCard,
+  MoveTaskInput,
+  UpdateTaskInput,
+} from "@/features/board/types";
 import BoardColumn from "./BoardColumn";
 import CreateTaskDialog from "./CreateTaskDialog";
 import SamuraiSilhouette from "./SamuraiSilhouette";
 import TaskCard from "./TaskCard";
+import TaskDetailDialog from "./TaskDetailDialog";
 
 interface BoardSceneProps {
   columns: Column[];
   isActive: boolean;
   onCreateTask: (task: CreateTaskInput) => void;
   onMoveTask: (taskMove: MoveTaskInput) => void;
+  onUpdateTask: (task: UpdateTaskInput) => Promise<boolean>;
+  onDeleteTask: (taskId: string) => Promise<boolean>;
   statusText?: string | null;
   statusTone?: "loading" | "guest" | "error" | null;
   canCreateTask?: boolean;
@@ -38,6 +47,8 @@ const BoardScene = ({
   isActive,
   onCreateTask,
   onMoveTask,
+  onUpdateTask,
+  onDeleteTask,
   statusText = null,
   statusTone = null,
   canCreateTask = true,
@@ -46,6 +57,7 @@ const BoardScene = ({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [recentlyMovedTaskId, setRecentlyMovedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isFilterTrayOpen, setIsFilterTrayOpen] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_BOARD_FILTERS);
   const sensors = useSensors(
@@ -70,8 +82,26 @@ const BoardScene = ({
   const activeTask =
     activeTaskId === null
       ? null
-      : filteredColumns.flatMap((column) => column.cards).find((card) => card.id === activeTaskId) ??
-        null;
+      : columns.flatMap((column) => column.cards).find((card) => card.id === activeTaskId) ?? null;
+
+  const selectedTaskEntry = useMemo(() => {
+    if (selectedTaskId === null) {
+      return null;
+    }
+
+    for (const column of columns) {
+      const task = column.cards.find((card) => card.id === selectedTaskId);
+
+      if (task) {
+        return {
+          task,
+          status: column.id,
+        };
+      }
+    }
+
+    return null;
+  }, [columns, selectedTaskId]);
 
   useEffect(() => {
     if (!recentlyMovedTaskId) {
@@ -84,6 +114,12 @@ const BoardScene = ({
 
     return () => window.clearTimeout(timeoutId);
   }, [recentlyMovedTaskId]);
+
+  useEffect(() => {
+    if (selectedTaskId && !selectedTaskEntry) {
+      setSelectedTaskId(null);
+    }
+  }, [selectedTaskEntry, selectedTaskId]);
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     setActiveTaskId(String(active.id));
@@ -101,6 +137,16 @@ const BoardScene = ({
 
     setRecentlyMovedTaskId(taskId);
     onMoveTask({ taskId, targetColumnId });
+  };
+
+  const handleSelectTask = (taskId: string) => {
+    setSelectedTaskId(taskId);
+  };
+
+  const handleTaskDetailOpenChange = (open: boolean) => {
+    if (!open) {
+      setSelectedTaskId(null);
+    }
   };
 
   const statusToneClasses =
@@ -290,6 +336,7 @@ const BoardScene = ({
               recentlyMovedTaskId={recentlyMovedTaskId}
               isBoardLoading={isBoardLoading}
               hasActiveFilters={hasActiveFilters}
+              onSelectTask={handleSelectTask}
             />
           ))}
         </div>
@@ -304,6 +351,15 @@ const BoardScene = ({
         onOpenChange={setIsCreateDialogOpen}
         onCreateTask={onCreateTask}
         submitLabel="Add To Do"
+      />
+
+      <TaskDetailDialog
+        open={selectedTaskEntry !== null}
+        task={selectedTaskEntry?.task ?? null}
+        status={selectedTaskEntry?.status ?? null}
+        onOpenChange={handleTaskDetailOpenChange}
+        onSaveTask={onUpdateTask}
+        onDeleteTask={onDeleteTask}
       />
     </div>
   );

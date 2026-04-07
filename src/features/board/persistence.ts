@@ -2,10 +2,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { createEmptyBoardColumns } from "./data";
 import { formatDueDate } from "./due-dates";
-import type { BoardColumnId, Column, KanbanCard, TaskStatus } from "./types";
+import type { BoardColumnId, Column, KanbanCard, TaskStatus, UpdateTaskInput } from "./types";
 
 type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
 type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
+type TaskUpdate = Database["public"]["Tables"]["tasks"]["Update"];
 
 const STATUS_TO_COLUMN_ID: Record<TaskStatus, BoardColumnId> = {
   todo: "todo",
@@ -56,6 +57,14 @@ const buildTaskInsert = (task: KanbanCard, userId: string): TaskInsert => ({
   user_id: userId,
 });
 
+const buildTaskUpdate = (task: UpdateTaskInput): TaskUpdate => ({
+  title: task.title,
+  description: task.description ?? null,
+  status: COLUMN_ID_TO_STATUS[task.status],
+  priority: task.priority ?? null,
+  due_date: task.dueDate ?? null,
+});
+
 export const fetchBoardColumnsForUser = async (userId: string): Promise<Column[]> => {
   if (!supabase) {
     return createEmptyBoardColumns();
@@ -98,6 +107,38 @@ export const moveTaskForUser = async (
   const { error } = await supabase
     .from("tasks")
     .update({ status: COLUMN_ID_TO_STATUS[targetColumnId] })
+    .eq("id", taskId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const updateTaskForUser = async (userId: string, task: UpdateTaskInput) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update(buildTaskUpdate(task))
+    .eq("id", task.taskId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const deleteTaskForUser = async (userId: string, taskId: string) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .delete()
     .eq("id", taskId)
     .eq("user_id", userId);
 

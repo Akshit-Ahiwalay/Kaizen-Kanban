@@ -8,6 +8,7 @@ interface DraggableTaskCardProps {
   columnId: string;
   delay: number;
   animateIn?: boolean;
+  onSelectTask: (taskId: string) => void;
 }
 
 const DraggableTaskCard = ({
@@ -15,6 +16,7 @@ const DraggableTaskCard = ({
   columnId,
   delay,
   animateIn = true,
+  onSelectTask,
 }: DraggableTaskCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useDraggable({
     id: card.id,
@@ -34,6 +36,20 @@ const DraggableTaskCard = ({
         opacity: isDragging ? 0.2 : 1,
       }}
       className="touch-none"
+      role="button"
+      tabIndex={0}
+      aria-label={`Open task ${card.title}`}
+      onClick={() => {
+        if (!isDragging) {
+          onSelectTask(card.id);
+        }
+      }}
+      onKeyDown={(event) => {
+        if ((event.key === "Enter" || event.key === " ") && !isDragging) {
+          event.preventDefault();
+          onSelectTask(card.id);
+        }
+      }}
       {...listeners}
       {...attributes}
     >

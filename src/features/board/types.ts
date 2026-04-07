@@ -30,3 +30,12 @@ export interface MoveTaskInput {
   targetColumnId: BoardColumnId;
   targetIndex?: number;
 }
+
+export interface UpdateTaskInput {
+  taskId: string;
+  title: string;
+  description?: string;
+  priority?: KanbanPriority;
+  dueDate?: string;
+  status: BoardColumnId;
+}

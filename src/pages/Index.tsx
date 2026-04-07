@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import LandingScreen from "@/components/LandingScreen";
 import BoardScene from "@/components/BoardScene";
-import type { Column, CreateTaskInput, MoveTaskInput } from "@/features/board/types";
+import type { Column, CreateTaskInput, MoveTaskInput, UpdateTaskInput } from "@/features/board/types";
 import { createEmptyBoardColumns, createInitialBoardColumns } from "@/features/board/data";
-import { createTaskCard, insertTaskIntoColumn, moveTask } from "@/features/board/mutations";
+import { createTaskCard, deleteTask, insertTaskIntoColumn, moveTask, updateTask } from "@/features/board/mutations";
 import {
   createTaskForUser,
+  deleteTaskForUser,
   fetchBoardColumnsForUser,
   moveTaskForUser,
+  updateTaskForUser,
 } from "@/features/board/persistence";
 import { ensureAnonymousSession } from "@/integrations/supabase/auth";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
@@ -92,6 +94,62 @@ const Index = () => {
           setSyncError("Move issue");
         }
       })();
+    },
+    [userId],
+  );
+
+  const handleUpdateTask = useCallback(
+    async (taskUpdate: UpdateTaskInput) => {
+      let previousColumns: Column[] | null = null;
+
+      setBoardColumns((currentColumns) => {
+        previousColumns = currentColumns;
+        return updateTask(currentColumns, taskUpdate);
+      });
+
+      if (!shouldUseSupabase || !userId) {
+        return true;
+      }
+
+      try {
+        await updateTaskForUser(userId, taskUpdate);
+        setSyncError(null);
+        return true;
+      } catch {
+        if (previousColumns) {
+          setBoardColumns(previousColumns);
+        }
+        setSyncError("Save issue");
+        return false;
+      }
+    },
+    [userId],
+  );
+
+  const handleDeleteTask = useCallback(
+    async (taskId: string) => {
+      let previousColumns: Column[] | null = null;
+
+      setBoardColumns((currentColumns) => {
+        previousColumns = currentColumns;
+        return deleteTask(currentColumns, taskId);
+      });
+
+      if (!shouldUseSupabase || !userId) {
+        return true;
+      }
+
+      try {
+        await deleteTaskForUser(userId, taskId);
+        setSyncError(null);
+        return true;
+      } catch {
+        if (previousColumns) {
+          setBoardColumns(previousColumns);
+        }
+        setSyncError("Delete issue");
+        return false;
+      }
     },
     [userId],
   );
@@ -246,6 +304,8 @@ const Index = () => {
           isActive={state !== "landing"}
           onCreateTask={handleCreateTask}
           onMoveTask={handleMoveTask}
+          onUpdateTask={handleUpdateTask}
+          onDeleteTask={handleDeleteTask}
           statusText={boardStatusText}
           statusTone={boardStatusTone}
           canCreateTask={!shouldUseSupabase || !!userId}
