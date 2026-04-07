@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import type { CreateTaskInput, KanbanPriority } from "@/features/board/types";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,7 @@ const CreateTaskDialog = ({
 }: CreateTaskDialogProps) => {
   const [draft, setDraft] = useState<TaskDraft>(initialDraft);
   const [titleError, setTitleError] = useState("");
+  const dueDateInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -66,6 +67,24 @@ const CreateTaskDialog = ({
       dueDate: draft.dueDate || undefined,
     });
     onOpenChange(false);
+  };
+
+  const handleOpenDueDatePicker = () => {
+    const input = dueDateInputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === "function") {
+      pickerInput.showPicker();
+      return;
+    }
+
+    input.click();
   };
 
   return (
@@ -171,6 +190,7 @@ const CreateTaskDialog = ({
               <div className="relative">
                 <Input
                   id="task-due-date"
+                  ref={dueDateInputRef}
                   type="date"
                   value={draft.dueDate}
                   onChange={(event) =>
@@ -178,10 +198,14 @@ const CreateTaskDialog = ({
                   }
                   className="date-input pr-11"
                 />
-                <CalendarDays
-                  size={16}
-                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/52"
-                />
+                <button
+                  type="button"
+                  aria-label="Open due date picker"
+                  onClick={handleOpenDueDatePicker}
+                  className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-muted-foreground/52 transition-colors duration-200 hover:text-foreground/72"
+                >
+                  <CalendarDays size={16} />
+                </button>
               </div>
             </div>
           </div>

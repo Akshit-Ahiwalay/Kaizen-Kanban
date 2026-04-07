@@ -90,8 +90,14 @@
   }
 
   input.date-input::-webkit-calendar-picker-indicator {
-    opacity: 0;
-    cursor: pointer;
+    display: none;
+    -webkit-appearance: none;
+  }
+
+  input.date-input::-webkit-clear-button,
+  input.date-input::-webkit-inner-spin-button {
+    display: none;
+    -webkit-appearance: none;
   }
 }
 

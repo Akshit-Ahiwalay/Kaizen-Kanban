@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import type {
   BoardColumnId,
@@ -65,6 +65,7 @@ const TaskDetailDialog = ({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const dueDateInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open || !task || !status) {
@@ -158,6 +159,24 @@ const TaskDetailDialog = ({
     }
 
     onOpenChange(false);
+  };
+
+  const handleOpenDueDatePicker = () => {
+    const input = dueDateInputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === "function") {
+      pickerInput.showPicker();
+      return;
+    }
+
+    input.click();
   };
 
   return (
@@ -289,6 +308,7 @@ const TaskDetailDialog = ({
               <div className="relative">
                 <Input
                   id="edit-task-due-date"
+                  ref={dueDateInputRef}
                   type="date"
                   value={draft.dueDate}
                   onChange={(event) =>
@@ -296,10 +316,14 @@ const TaskDetailDialog = ({
                   }
                   className="date-input pr-11"
                 />
-                <CalendarDays
-                  size={16}
-                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/52"
-                />
+                <button
+                  type="button"
+                  aria-label="Open due date picker"
+                  onClick={handleOpenDueDatePicker}
+                  className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-muted-foreground/52 transition-colors duration-200 hover:text-foreground/72"
+                >
+                  <CalendarDays size={16} />
+                </button>
               </div>
             </div>
 
