@@ -1,17 +1,17 @@
 # Kanban Board
 
-A refined kanban board built with React, TypeScript, and Supabase guest persistence.
+A refined Kanban board built with React, TypeScript, and Supabase.
 
-Current app behavior:
-- Single routed page at `/`
-- Landing screen with animated enter button
-- Clip-path reveal into the board scene
-- Anonymous guest auth on first launch
-- Per-user task persistence in Supabase
-- Task creation in the To Do column
-- Drag-and-drop movement between columns
+## Current behavior
 
-Useful commands:
+- Single routed app with `/` and a catch-all not-found route
+- Landing screen with guest access, Google auth, and magic-link sign-in
+- Full-page brush-inspired reveal from landing into the board
+- Guest and authenticated persistence with Supabase when configured
+- Task creation, editing, deletion, assignees, filtering, and drag-and-drop reordering
+
+## Useful commands
+
 - `npm run dev`
 - `npm run build`
 - `npm run test`

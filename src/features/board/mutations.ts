@@ -8,8 +8,6 @@ import type {
 } from "./types";
 import { formatDueDate } from "./due-dates";
 
-const TODO_COLUMN_ID: BoardColumnId = "todo";
-
 const createFallbackUuid = () =>
   "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
     const random = Math.floor(Math.random() * 16);
@@ -56,11 +54,6 @@ export const insertTaskIntoColumn = (
       : column,
   );
 };
-
-export const createTaskInTodoColumn = (
-  columns: Column[],
-  task: CreateTaskInput,
-): Column[] => insertTaskIntoColumn(columns, createTaskCard(task), TODO_COLUMN_ID);
 
 const clampTargetIndex = (index: number | undefined, maxIndex: number) => {
   if (index === undefined) {
