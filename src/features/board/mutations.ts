@@ -155,7 +155,7 @@ export const moveTask = (
 
 export const updateTask = (
   columns: Column[],
-  { taskId, title, description, priority, dueDate, status }: UpdateTaskInput,
+  { taskId, title, description, priority, dueDate, status, assigneeId, assignee }: UpdateTaskInput,
 ): Column[] => {
   const sourceColumnIndex = columns.findIndex((column) =>
     column.cards.some((card) => card.id === taskId),
@@ -188,6 +188,8 @@ export const updateTask = (
     dueDateValue: dueDate,
     dueDate: formatDueDate(dueDate),
     done: targetColumnId === "done",
+    assigneeId,
+    assignee,
   };
 
   if (sourceColumnIndex === targetColumnIndex) {

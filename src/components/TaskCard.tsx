@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { getDueDateState } from "@/features/board/due-dates";
 import type { KanbanCard } from "@/features/board/types";
+import { getInitials, withAlpha } from "@/features/team/types";
 import { cn } from "@/lib/utils";
 
 interface TaskCardProps {
@@ -53,8 +54,8 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
         </p>
       )}
 
-      {(card.dueDate || card.priority || card.done) && (
-        <div className="flex items-center gap-2 mt-2">
+      {(card.dueDate || card.priority || card.done || card.assignee) && (
+        <div className="mt-2 flex items-center gap-2">
           {card.priority && (
             <span
               className={`text-[9px] font-body tracking-wider uppercase ${priorityColors[card.priority]}`}
@@ -72,8 +73,22 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
               {card.dueDate}
             </span>
           )}
+          {card.assignee && (
+            <span
+              aria-label={`Assignee ${card.assignee.name}`}
+              className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full border text-[9px] font-body uppercase tracking-[0.06em]"
+              style={{
+                color: card.assignee.color,
+                borderColor: withAlpha(card.assignee.color, "3d"),
+                backgroundColor: withAlpha(card.assignee.color, "12"),
+              }}
+              title={card.assignee.name}
+            >
+              {getInitials(card.assignee.name)}
+            </span>
+          )}
           {card.done && (
-            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-olive/40" />
+            <span className={`${card.assignee ? "" : "ml-auto"} h-1.5 w-1.5 rounded-full bg-olive/40`} />
           )}
         </div>
       )}

@@ -10,9 +10,11 @@ import {
 } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Plus, Search, SlidersHorizontal, Users } from "lucide-react";
 import {
+  ALL_ASSIGNEES_FILTER,
   DEFAULT_BOARD_FILTERS,
+  UNASSIGNED_ASSIGNEE_FILTER,
   filterBoardColumns,
   hasActiveBoardFilters,
 } from "@/features/board/filters";
@@ -20,8 +22,9 @@ import { getBoardStats } from "@/features/board/stats";
 import type {
   Column,
   CreateTaskInput,
-  KanbanCard,
+  CreateTeamMemberInput,
   MoveTaskInput,
+  TeamMember,
   UpdateTaskInput,
 } from "@/features/board/types";
 import BoardColumn from "./BoardColumn";
@@ -29,11 +32,14 @@ import CreateTaskDialog from "./CreateTaskDialog";
 import SamuraiSilhouette from "./SamuraiSilhouette";
 import TaskCard from "./TaskCard";
 import TaskDetailDialog from "./TaskDetailDialog";
+import TeamMembersDialog from "./TeamMembersDialog";
 
 interface BoardSceneProps {
   columns: Column[];
+  teamMembers: TeamMember[];
   isActive: boolean;
   onCreateTask: (task: CreateTaskInput) => void;
+  onCreateTeamMember: (member: CreateTeamMemberInput) => Promise<boolean>;
   onMoveTask: (taskMove: MoveTaskInput) => void;
   onUpdateTask: (task: UpdateTaskInput) => Promise<boolean>;
   onDeleteTask: (taskId: string) => Promise<boolean>;
@@ -45,8 +51,10 @@ interface BoardSceneProps {
 
 const BoardScene = ({
   columns,
+  teamMembers,
   isActive,
   onCreateTask,
+  onCreateTeamMember,
   onMoveTask,
   onUpdateTask,
   onDeleteTask,
@@ -56,6 +64,7 @@ const BoardScene = ({
   isBoardLoading = false,
 }: BoardSceneProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [recentlyMovedTaskId, setRecentlyMovedTaskId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -237,6 +246,15 @@ const BoardScene = ({
             )}
             <button
               type="button"
+              aria-label="Manage team members"
+              className="p-2 text-muted-foreground/48 transition-colors duration-300 hover:text-foreground/80 disabled:cursor-not-allowed disabled:text-muted-foreground/26"
+              onClick={() => setIsTeamDialogOpen(true)}
+              disabled={!canCreateTask}
+            >
+              <Users size={13} />
+            </button>
+            <button
+              type="button"
               aria-label="Toggle search and filters"
               className={`p-2 transition-colors duration-300 ${
                 isFilterTrayVisible
@@ -319,6 +337,28 @@ const BoardScene = ({
                     <option value="done">Done</option>
                   </select>
                 </div>
+
+                <div className="border border-border/22 bg-background/55 px-3 py-2">
+                  <select
+                    aria-label="Filter by assignee"
+                    value={filters.assigneeId}
+                    onChange={(event) =>
+                      setFilters((current) => ({
+                        ...current,
+                        assigneeId: event.target.value,
+                      }))
+                    }
+                    className="bg-transparent font-body text-[11px] uppercase tracking-[0.15em] text-foreground/68 outline-none"
+                  >
+                    <option value={ALL_ASSIGNEES_FILTER}>All assignees</option>
+                    <option value={UNASSIGNED_ASSIGNEE_FILTER}>Unassigned</option>
+                    {teamMembers.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {hasActiveFilters && (
@@ -380,10 +420,18 @@ const BoardScene = ({
         submitLabel="Add To Do"
       />
 
+      <TeamMembersDialog
+        open={isTeamDialogOpen}
+        members={teamMembers}
+        onOpenChange={setIsTeamDialogOpen}
+        onCreateMember={onCreateTeamMember}
+      />
+
       <TaskDetailDialog
         open={selectedTaskEntry !== null}
         task={selectedTaskEntry?.task ?? null}
         status={selectedTaskEntry?.status ?? null}
+        teamMembers={teamMembers}
         onOpenChange={handleTaskDetailOpenChange}
         onSaveTask={onUpdateTask}
         onDeleteTask={onDeleteTask}

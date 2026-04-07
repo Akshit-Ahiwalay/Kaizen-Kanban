@@ -2,6 +2,12 @@ export type BoardColumnId = "todo" | "in-progress" | "in-review" | "done";
 export type TaskStatus = "todo" | "in_progress" | "in_review" | "done";
 export type KanbanPriority = "low" | "normal" | "high";
 
+export interface TeamMember {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface KanbanCard {
   id: string;
   title: string;
@@ -11,6 +17,8 @@ export interface KanbanCard {
   priority?: KanbanPriority;
   done?: boolean;
   sortOrder?: number;
+  assigneeId?: string;
+  assignee?: TeamMember;
 }
 
 export interface Column {
@@ -39,4 +47,11 @@ export interface UpdateTaskInput {
   priority?: KanbanPriority;
   dueDate?: string;
   status: BoardColumnId;
+  assigneeId?: string;
+  assignee?: TeamMember;
+}
+
+export interface CreateTeamMemberInput {
+  name: string;
+  color: string;
 }

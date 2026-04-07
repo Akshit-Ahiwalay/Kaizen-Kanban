@@ -18,13 +18,14 @@ export const demoColumns: Column[] = [
     id: "todo",
     title: "To Do",
     cards: [
-      { id: "1", title: "Design landing page", priority: "high" },
+      { id: "1", title: "Design landing page", priority: "high", assigneeId: "tm-1" },
       {
         id: "2",
         title: "Database setup",
         dueDateValue: "2026-04-04",
         dueDate: "Apr 4",
         done: true,
+        assigneeId: "tm-2",
       },
       {
         id: "3",
@@ -43,6 +44,7 @@ export const demoColumns: Column[] = [
         title: "Content summary",
         dueDateValue: "2026-04-08",
         dueDate: "Apr 8",
+        assigneeId: "tm-2",
       },
       { id: "5", title: "Training soon", priority: "low", done: true },
     ],

@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
-import type { BoardColumnId, KanbanPriority, KanbanCard, UpdateTaskInput } from "@/features/board/types";
+import type {
+  BoardColumnId,
+  KanbanCard,
+  KanbanPriority,
+  TeamMember,
+  UpdateTaskInput,
+} from "@/features/board/types";
 
 interface TaskDetailDialogProps {
   open: boolean;
   task: KanbanCard | null;
   status: BoardColumnId | null;
+  teamMembers: TeamMember[];
   onOpenChange: (open: boolean) => void;
   onSaveTask: (task: UpdateTaskInput) => Promise<boolean>;
   onDeleteTask: (taskId: string) => Promise<boolean>;
@@ -16,6 +23,7 @@ interface TaskDraft {
   priority: "" | KanbanPriority;
   dueDate: string;
   status: BoardColumnId;
+  assigneeId: string;
 }
 
 const STATUS_OPTIONS: Array<{ label: string; value: BoardColumnId }> = [
@@ -31,12 +39,14 @@ const DEFAULT_DRAFT: TaskDraft = {
   priority: "",
   dueDate: "",
   status: "todo",
+  assigneeId: "",
 };
 
 const TaskDetailDialog = ({
   open,
   task,
   status,
+  teamMembers,
   onOpenChange,
   onSaveTask,
   onDeleteTask,
@@ -60,6 +70,7 @@ const TaskDetailDialog = ({
       priority: task.priority ?? "",
       dueDate: task.dueDateValue ?? "",
       status,
+      assigneeId: task.assigneeId ?? "",
     });
     setTitleError("");
     setSaveError("");
@@ -103,6 +114,7 @@ const TaskDetailDialog = ({
     setSaveError("");
     setDeleteError("");
 
+    const assignee = teamMembers.find((member) => member.id === draft.assigneeId);
     const didSave = await onSaveTask({
       taskId: task.id,
       title,
@@ -110,6 +122,8 @@ const TaskDetailDialog = ({
       priority: draft.priority || undefined,
       dueDate: draft.dueDate || undefined,
       status: draft.status,
+      assigneeId: assignee?.id,
+      assignee,
     });
 
     setIsSaving(false);
@@ -261,22 +275,51 @@ const TaskDetailDialog = ({
             </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="edit-task-due-date"
-              className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
-            >
-              Due Date
-            </label>
-            <input
-              id="edit-task-due-date"
-              type="date"
-              value={draft.dueDate}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, dueDate: event.target.value }))
-              }
-              className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="edit-task-due-date"
+                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+              >
+                Due Date
+              </label>
+              <input
+                id="edit-task-due-date"
+                type="date"
+                value={draft.dueDate}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, dueDate: event.target.value }))
+                }
+                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="edit-task-assignee"
+                className="mb-2 block font-body text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60"
+              >
+                Assignee
+              </label>
+              <select
+                id="edit-task-assignee"
+                value={draft.assigneeId}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    assigneeId: event.target.value,
+                  }))
+                }
+                className="w-full border border-border/30 bg-background/70 px-3 py-2.5 font-body text-sm text-foreground/80 outline-none transition-colors duration-300 focus:border-border/60"
+              >
+                <option value="">Unassigned</option>
+                {teamMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="border-t border-border/18 pt-4">

@@ -2,7 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import LandingScreen from "@/components/LandingScreen";
 import BoardScene from "@/components/BoardScene";
-import type { Column, CreateTaskInput, MoveTaskInput, UpdateTaskInput } from "@/features/board/types";
+import type {
+  Column,
+  CreateTaskInput,
+  CreateTeamMemberInput,
+  MoveTaskInput,
+  TeamMember,
+  UpdateTaskInput,
+} from "@/features/board/types";
+import { attachAssigneesToColumns } from "@/features/board/assignees";
 import { createEmptyBoardColumns, createInitialBoardColumns } from "@/features/board/data";
 import { createTaskCard, deleteTask, insertTaskIntoColumn, moveTask, updateTask } from "@/features/board/mutations";
 import {
@@ -12,6 +20,9 @@ import {
   syncTaskOrderForUser,
   updateTaskForUser,
 } from "@/features/board/persistence";
+import { createInitialTeamMembers } from "@/features/team/data";
+import { createTeamMember } from "@/features/team/mutations";
+import { createTeamMemberForUser, fetchTeamMembersForUser } from "@/features/team/persistence";
 import { ensureAnonymousSession } from "@/integrations/supabase/auth";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 
@@ -25,7 +36,12 @@ const findTaskColumnId = (columns: Column[], taskId: string) =>
 const Index = () => {
   const [state, setState] = useState<AppState>("landing");
   const [boardColumns, setBoardColumns] = useState<Column[]>(
-    shouldUseSupabase ? createEmptyBoardColumns : createInitialBoardColumns,
+    shouldUseSupabase
+      ? createEmptyBoardColumns
+      : () => attachAssigneesToColumns(createInitialBoardColumns(), createInitialTeamMembers()),
+  );
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(
+    shouldUseSupabase ? [] : createInitialTeamMembers,
   );
   const [session, setSession] = useState<Session | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -184,6 +200,35 @@ const Index = () => {
     [userId],
   );
 
+  const handleCreateTeamMember = useCallback(
+    async (input: CreateTeamMemberInput) => {
+      const newMember = createTeamMember(input);
+      let previousMembers: TeamMember[] | null = null;
+
+      setTeamMembers((currentMembers) => {
+        previousMembers = currentMembers;
+        return [...currentMembers, newMember];
+      });
+
+      if (!shouldUseSupabase || !userId) {
+        return true;
+      }
+
+      try {
+        await createTeamMemberForUser(userId, newMember);
+        setSyncError(null);
+        return true;
+      } catch {
+        if (previousMembers) {
+          setTeamMembers(previousMembers);
+        }
+        setSyncError("Members issue");
+        return false;
+      }
+    },
+    [userId],
+  );
+
   useEffect(() => {
     if (!shouldUseSupabase || !supabase) {
       return;
@@ -245,6 +290,7 @@ const Index = () => {
     if (!userId) {
       if (!isAuthLoading) {
         setBoardColumns(createEmptyBoardColumns());
+        setTeamMembers([]);
         setIsBoardLoading(false);
       }
       return;
@@ -256,13 +302,17 @@ const Index = () => {
       setIsBoardLoading(true);
 
       try {
-        const columns = await fetchBoardColumnsForUser(userId);
+        const [columns, members] = await Promise.all([
+          fetchBoardColumnsForUser(userId),
+          fetchTeamMembersForUser(userId),
+        ]);
 
         if (!isMounted) {
           return;
         }
 
-        setBoardColumns(columns);
+        setTeamMembers(members);
+        setBoardColumns(attachAssigneesToColumns(columns, members));
         setSyncError(null);
       } catch {
         if (!isMounted) {
@@ -271,6 +321,7 @@ const Index = () => {
 
         setSyncError("Sync unavailable");
         setBoardColumns(createEmptyBoardColumns());
+        setTeamMembers([]);
       } finally {
         if (isMounted) {
           setIsBoardLoading(false);
@@ -331,8 +382,10 @@ const Index = () => {
       <div className="absolute inset-0 z-10">
         <BoardScene
           columns={boardColumns}
+          teamMembers={teamMembers}
           isActive={state !== "landing"}
           onCreateTask={handleCreateTask}
+          onCreateTeamMember={handleCreateTeamMember}
           onMoveTask={handleMoveTask}
           onUpdateTask={handleUpdateTask}
           onDeleteTask={handleDeleteTask}

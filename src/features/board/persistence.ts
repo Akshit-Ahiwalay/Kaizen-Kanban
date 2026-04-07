@@ -30,6 +30,7 @@ const mapTaskRowToCard = (row: TaskRow): KanbanCard => ({
   dueDateValue: row.due_date ?? undefined,
   dueDate: formatDueDate(row.due_date ?? undefined),
   done: row.status === "done",
+  assigneeId: row.assignee_id ?? undefined,
   sortOrder: row.sort_order,
 });
 
@@ -55,6 +56,7 @@ const buildTaskInsert = (task: KanbanCard, userId: string): TaskInsert => ({
   status: "todo",
   priority: task.priority ?? null,
   due_date: task.dueDateValue ?? null,
+  assignee_id: task.assigneeId ?? null,
   sort_order: task.sortOrder ?? 0,
   user_id: userId,
 });
@@ -65,6 +67,7 @@ const buildTaskUpdate = (task: UpdateTaskInput): TaskUpdate => ({
   status: COLUMN_ID_TO_STATUS[task.status],
   priority: task.priority ?? null,
   due_date: task.dueDate ?? null,
+  assignee_id: task.assigneeId ?? null,
 });
 
 const buildTaskOrderUpdates = (
@@ -95,7 +98,7 @@ export const fetchBoardColumnsForUser = async (userId: string): Promise<Column[]
 
   const { data, error } = await supabase
     .from("tasks")
-    .select("id, title, description, status, priority, due_date, sort_order, user_id, created_at")
+    .select("id, title, description, status, priority, due_date, assignee_id, sort_order, user_id, created_at")
     .eq("user_id", userId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });

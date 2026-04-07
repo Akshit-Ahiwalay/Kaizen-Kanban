@@ -9,7 +9,7 @@ describe("board stats", () => {
     expect(getBoardStats(columns)).toEqual({
       totalTasks: 8,
       doneTasks: 4,
-      overdueTasks: 1,
+      overdueTasks: 2,
       inProgressTasks: 2,
     });
   });

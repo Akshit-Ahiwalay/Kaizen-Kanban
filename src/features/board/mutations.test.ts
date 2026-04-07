@@ -93,6 +93,8 @@ describe("board mutations", () => {
       priority: "normal",
       dueDate: "2026-04-09",
       status: "todo",
+      assigneeId: "tm-1",
+      assignee: { id: "tm-1", name: "Aki", color: "#58644b" },
     });
 
     const updatedCard = result
@@ -106,6 +108,8 @@ describe("board mutations", () => {
       dueDateValue: "2026-04-09",
       dueDate: "Apr 9",
       done: false,
+      assigneeId: "tm-1",
+      assignee: { id: "tm-1", name: "Aki", color: "#58644b" },
     });
   });
 

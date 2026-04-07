@@ -11,6 +11,7 @@ export interface Database {
           status: TaskStatus;
           priority: KanbanPriority | null;
           due_date: string | null;
+          assignee_id: string | null;
           sort_order: number;
           user_id: string;
           created_at: string;
@@ -22,6 +23,7 @@ export interface Database {
           status: TaskStatus;
           priority?: KanbanPriority | null;
           due_date?: string | null;
+          assignee_id?: string | null;
           sort_order?: number;
           user_id: string;
           created_at?: string;
@@ -33,8 +35,32 @@ export interface Database {
           status?: TaskStatus;
           priority?: KanbanPriority | null;
           due_date?: string | null;
+          assignee_id?: string | null;
           sort_order?: number;
           user_id?: string;
+          created_at?: string;
+        };
+      };
+      team_members: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          color: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          color: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          color?: string;
           created_at?: string;
         };
       };

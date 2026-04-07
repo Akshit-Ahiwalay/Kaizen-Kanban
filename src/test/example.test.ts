@@ -58,6 +58,42 @@ describe("Index page", () => {
     expect(screen.queryByText("Content summary")).not.toBeInTheDocument();
   });
 
+  it("creates a member, assigns a task, and filters by assignee", async () => {
+    render(createElement(Index));
+
+    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: /manage team members/i }));
+
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Mina" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add member/i }));
+
+    expect(await screen.findByText("Mina")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^close$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /open task design landing page/i }));
+    const assigneeSelect = screen.getByLabelText("Assignee") as HTMLSelectElement;
+    const minaOption = Array.from(assigneeSelect.options).find((option) => option.text === "Mina");
+
+    expect(minaOption?.value).toBeTruthy();
+
+    fireEvent.change(assigneeSelect, {
+      target: { value: minaOption?.value },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    expect(await screen.findByLabelText("Assignee Mina")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /toggle search and filters/i }));
+    fireEvent.change(screen.getByLabelText("Filter by assignee"), {
+      target: { value: minaOption?.value },
+    });
+
+    expect(screen.getByText("Design landing page")).toBeInTheDocument();
+    expect(screen.queryByText("Database setup")).not.toBeInTheDocument();
+  });
+
   it("opens a task and saves edited details", async () => {
     render(createElement(Index));
 
