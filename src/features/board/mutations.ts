@@ -1,17 +1,7 @@
 import type { BoardColumnId, Column, CreateTaskInput, KanbanCard, MoveTaskInput } from "./types";
+import { formatDueDate } from "./due-dates";
 
 const TODO_COLUMN_ID: BoardColumnId = "todo";
-
-const formatDueDate = (dueDate?: string) => {
-  if (!dueDate) {
-    return undefined;
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(new Date(`${dueDate}T00:00:00`));
-};
 
 const createFallbackUuid = () =>
   "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {

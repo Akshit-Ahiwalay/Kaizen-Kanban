@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { getDueDateState } from "@/features/board/due-dates";
 import type { KanbanCard } from "@/features/board/types";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,16 @@ const priorityColors: Record<string, string> = {
   low: "text-muted-foreground/56",
 };
 
+const dueDateClasses = {
+  none: "text-muted-foreground/46",
+  overdue: "border border-seal/18 bg-seal/6 px-2 py-0.5 text-seal/74",
+  today: "border border-seal/12 bg-seal/[0.04] px-2 py-0.5 text-foreground/72",
+  soon: "border border-olive/16 bg-olive/6 px-2 py-0.5 text-olive/72",
+} as const;
+
 const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }: TaskCardProps) => {
+  const dueDateState = getDueDateState(card.dueDateValue);
+
   return (
     <motion.div
       className={cn(
@@ -53,7 +63,12 @@ const TaskCard = ({ card, delay, animateIn = true, elevated = false, className }
             </span>
           )}
           {card.dueDate && (
-            <span className="text-[9px] font-body tracking-wide text-muted-foreground/46">
+            <span
+              className={cn(
+                "text-[9px] font-body tracking-wide",
+                dueDateState === "none" ? dueDateClasses.none : dueDateClasses[dueDateState],
+              )}
+            >
               {card.dueDate}
             </span>
           )}

@@ -72,7 +72,7 @@ const BoardColumn = ({
                 {column.id === "todo" ? "No tasks yet" : "Drop tasks here"}
               </p>
               <p className="mt-1 font-body text-[10px] uppercase tracking-[0.16em] text-muted-foreground/36">
-                {column.id === "todo" ? "Begin here" : "Awaiting motion"}
+                {column.id === "todo" ? "Add one to begin" : "Ready"}
               </p>
             </div>
           )}

@@ -19,15 +19,31 @@ export const demoColumns: Column[] = [
     title: "To Do",
     cards: [
       { id: "1", title: "Design landing page", priority: "high" },
-      { id: "2", title: "Database setup", dueDate: "Sep 15", done: true },
-      { id: "3", title: "Project scope setup", dueDate: "Sep 15" },
+      {
+        id: "2",
+        title: "Database setup",
+        dueDateValue: "2026-04-04",
+        dueDate: "Apr 4",
+        done: true,
+      },
+      {
+        id: "3",
+        title: "Project scope setup",
+        dueDateValue: "2026-04-06",
+        dueDate: "Apr 6",
+      },
     ],
   },
   {
     id: "in-progress",
     title: "In Progress",
     cards: [
-      { id: "4", title: "Content summary", dueDate: "Sep 16" },
+      {
+        id: "4",
+        title: "Content summary",
+        dueDateValue: "2026-04-08",
+        dueDate: "Apr 8",
+      },
       { id: "5", title: "Training soon", priority: "low", done: true },
     ],
   },
@@ -35,7 +51,13 @@ export const demoColumns: Column[] = [
     id: "in-review",
     title: "In Review",
     cards: [
-      { id: "6", title: "Write documentation", priority: "high", dueDate: "Sep 20" },
+      {
+        id: "6",
+        title: "Write documentation",
+        priority: "high",
+        dueDateValue: "2026-04-14",
+        dueDate: "Apr 14",
+      },
     ],
   },
   {

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { createEmptyBoardColumns } from "./data";
+import { formatDueDate } from "./due-dates";
 import type { BoardColumnId, Column, KanbanCard, TaskStatus } from "./types";
 
 type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
@@ -20,24 +21,13 @@ const COLUMN_ID_TO_STATUS: Record<BoardColumnId, TaskStatus> = {
   done: "done",
 };
 
-const formatDueDateForCard = (dueDate: string | null) => {
-  if (!dueDate) {
-    return undefined;
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(new Date(`${dueDate}T00:00:00`));
-};
-
 const mapTaskRowToCard = (row: TaskRow): KanbanCard => ({
   id: row.id,
   title: row.title,
   description: row.description ?? undefined,
   priority: row.priority ?? undefined,
   dueDateValue: row.due_date ?? undefined,
-  dueDate: formatDueDateForCard(row.due_date),
+  dueDate: formatDueDate(row.due_date ?? undefined),
   done: row.status === "done",
 });
 
