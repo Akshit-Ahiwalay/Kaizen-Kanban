@@ -59,7 +59,7 @@ const LandingAuthPanel = ({
 
   if (!canUseSupabase) {
     return (
-      <div className="flex flex-col items-center gap-4 border border-border/18 bg-[hsl(var(--background)/0.42)] px-6 py-6 shadow-[inset_0_1px_0_hsl(var(--background)/0.54)]">
+      <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:px-6 sm:py-6">
         <EnterButton onClick={onEnter} />
         <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           Local board
@@ -70,18 +70,18 @@ const LandingAuthPanel = ({
 
   if (hasSession) {
     return (
-      <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-6 py-6 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)]">
+      <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:px-6 sm:py-6">
         <EnterButton onClick={onEnter} disabled={isBusy} />
         <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           {isGuestSession ? "Guest access ready" : "Signed in"}
         </p>
         {accountLabel && !isGuestSession && (
-          <p className="max-w-[18rem] font-body text-[13px] leading-relaxed text-muted-foreground/62">
+          <p className="max-w-[18rem] break-words font-body text-[13px] leading-relaxed text-muted-foreground/62">
             {accountLabel}
           </p>
         )}
         {statusMessage && (
-          <p className="font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
+          <p className="max-w-[19rem] break-words font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
             {statusMessage}
           </p>
         )}
@@ -90,8 +90,8 @@ const LandingAuthPanel = ({
   }
 
   return (
-    <div className="flex w-full max-w-[26.5rem] flex-col items-center gap-4">
-      <div className="flex w-full flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.38)] px-6 py-6 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)]">
+    <div className="flex w-full max-w-[26.5rem] flex-col items-center gap-3 sm:gap-4">
+      <div className="flex w-full flex-col items-center gap-3 border border-border/18 bg-[hsl(var(--background)/0.38)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:gap-3.5 sm:px-6 sm:py-6">
         <EnterButton onClick={() => void onContinueAsGuest()} disabled={isBusy || isSendingLink} />
         <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
           Continue as guest
@@ -101,26 +101,26 @@ const LandingAuthPanel = ({
         </p>
       </div>
 
-      <div className="flex w-full flex-col gap-4 border border-border/20 bg-[hsl(var(--background)/0.46)] px-6 py-6 shadow-[inset_0_1px_0_hsl(var(--background)/0.56)]">
-        <div className="space-y-1.5 text-center">
+      <div className="flex w-full flex-col gap-3.5 border border-border/20 bg-[hsl(var(--background)/0.46)] px-5 py-5 shadow-[inset_0_1px_0_hsl(var(--background)/0.56)] sm:gap-4 sm:px-6 sm:py-6">
+        <div className="space-y-1 text-center sm:space-y-1.5">
           <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/44">
             Or sign in
           </p>
-          <p className="font-body text-[13px] leading-relaxed text-muted-foreground/58">
+          <p className="mx-auto max-w-[18rem] font-body text-[13px] leading-relaxed text-muted-foreground/58">
             Sync your board with Google or a magic link.
           </p>
         </div>
 
         <button
           type="button"
-          className="border border-border/30 bg-[hsl(var(--background)/0.42)] px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/74 transition-all duration-300 hover:border-border/50 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+          className="min-h-11 border border-border/30 bg-[hsl(var(--background)/0.42)] px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/74 transition-all duration-300 hover:border-border/50 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
           onClick={() => void onContinueWithGoogle()}
           disabled={isBusy || isSendingLink}
         >
           Continue with Google
         </button>
 
-        <form className="flex flex-col gap-3" onSubmit={handleSendMagicLink}>
+        <form className="flex flex-col gap-2.5 sm:gap-3" onSubmit={handleSendMagicLink}>
           <Input
             aria-label="Email for magic link"
             type="email"
@@ -136,7 +136,7 @@ const LandingAuthPanel = ({
           />
           <button
             type="submit"
-            className="border border-border/26 bg-[hsl(var(--background)/0.42)] px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/46 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+            className="min-h-11 border border-border/26 bg-[hsl(var(--background)/0.42)] px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/46 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
             disabled={isBusy || isSendingLink}
           >
             {isSendingLink ? "Sending..." : "Email me a magic link"}
@@ -145,7 +145,7 @@ const LandingAuthPanel = ({
       </div>
 
       {statusMessage && (
-        <p className="font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
+        <p className="max-w-[19rem] px-2 text-center font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
           {statusMessage}
         </p>
       )}

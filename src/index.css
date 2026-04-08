@@ -109,6 +109,48 @@
   .font-body {
     font-family: var(--font-body);
   }
+
+  .landing-screen-shell {
+    @apply relative h-full w-full overflow-x-hidden overflow-y-auto bg-background;
+  }
+
+  .landing-screen-inner {
+    @apply relative flex min-h-full w-full items-center justify-center px-4 py-10 sm:px-6 md:px-8;
+  }
+
+  .landing-screen-content {
+    @apply flex w-full max-w-[30rem] flex-col items-center gap-8 px-4 sm:gap-12;
+  }
+
+  .landing-screen-calligraphy-frame {
+    @apply relative pr-4 sm:pr-5;
+  }
+
+  .landing-screen-signature {
+    @apply pointer-events-none absolute inset-x-0 bottom-10 text-center font-display text-[10px] tracking-[0.5em] text-muted-foreground/30;
+  }
+}
+
+@media (max-height: 780px) {
+  .landing-screen-inner {
+    align-items: flex-start;
+    padding-top: 2rem;
+    padding-bottom: 5.5rem;
+  }
+
+  .landing-screen-content {
+    gap: 2rem;
+  }
+
+  .landing-screen-signature {
+    bottom: 1.5rem;
+  }
+}
+
+@media (max-height: 640px) {
+  .landing-screen-signature {
+    display: none;
+  }
 }
 
 /* Brush mask button animation */

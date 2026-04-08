@@ -27,17 +27,17 @@ const LandingScreen = ({
   onSendMagicLink,
 }: LandingScreenProps) => {
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center bg-background relative">
-      {/* Main calligraphy composition */}
-      <motion.div
-        className="flex flex-col items-center gap-11 px-4 sm:gap-12"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-      >
+    <div className="landing-screen-shell">
+      <div className="landing-screen-inner">
+        <motion.div
+          className="landing-screen-content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        >
         {/* Vertical Japanese calligraphy — native text, no image */}
         <motion.div
-          className="relative"
+          className="landing-screen-calligraphy-frame"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -46,7 +46,7 @@ const LandingScreen = ({
             className="font-display text-foreground select-none"
             style={{
               writingMode: "vertical-rl",
-              fontSize: "clamp(100px, 14vw, 160px)",
+              fontSize: "clamp(72px, 14vw, 160px)",
               lineHeight: 1.1,
               letterSpacing: "0.05em",
               fontWeight: 400,
@@ -58,7 +58,7 @@ const LandingScreen = ({
 
           {/* Red seal / hanko mark */}
           <svg
-            className="absolute -bottom-3 -right-5"
+            className="absolute -bottom-2 right-0 sm:-bottom-3"
             width="28"
             height="28"
             viewBox="0 0 28 28"
@@ -89,7 +89,7 @@ const LandingScreen = ({
 
         {/* Subtle divider */}
         <motion.div
-          className="w-12 h-px bg-foreground/15"
+          className="h-px w-10 bg-foreground/15 sm:w-12"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.8, delay: 0.9 }}
@@ -117,15 +117,15 @@ const LandingScreen = ({
         </motion.div>
       </motion.div>
 
-      {/* Bottom subtle text */}
-      <motion.div
-        className="absolute bottom-10 font-display text-[10px] tracking-[0.5em] text-muted-foreground/30"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1.6 }}
-      >
+        <motion.div
+          className="landing-screen-signature"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 1.6 }}
+        >
         改善
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };
