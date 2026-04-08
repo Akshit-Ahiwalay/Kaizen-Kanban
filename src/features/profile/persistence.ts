@@ -20,17 +20,25 @@ const resolveDisplayName = (user: User) => {
   );
 };
 
-const resolveAvatarUrl = (user: User) => {
-  const metadata = user.user_metadata ?? {};
+export const resolveUserAvatarUrl = (user?: User | null) => {
+  if (!user) {
+    return null;
+  }
 
-  return metadata.avatar_url ?? metadata.picture ?? null;
+  const metadata = user.user_metadata ?? {};
+  const identityAvatarUrl =
+    user.identities
+      ?.map((identity) => identity.identity_data?.avatar_url ?? identity.identity_data?.picture ?? null)
+      .find((value): value is string => Boolean(value)) ?? null;
+
+  return metadata.avatar_url ?? metadata.picture ?? identityAvatarUrl ?? null;
 };
 
 const buildProfileInsert = (user: User, existingProfile?: ProfileRow | null): ProfileInsert => ({
   id: user.id,
   email: user.email ?? existingProfile?.email ?? null,
   display_name: resolveDisplayName(user) ?? existingProfile?.display_name ?? null,
-  avatar_url: resolveAvatarUrl(user) ?? existingProfile?.avatar_url ?? null,
+  avatar_url: resolveUserAvatarUrl(user) ?? existingProfile?.avatar_url ?? null,
 });
 
 const mapProfileRow = (row: ProfileRow): AppProfile => ({

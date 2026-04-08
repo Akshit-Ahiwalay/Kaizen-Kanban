@@ -23,7 +23,7 @@ import {
 import { createInitialTeamMembers } from "@/features/team/data";
 import { createTeamMember } from "@/features/team/mutations";
 import { createTeamMemberForUser, fetchTeamMembersForUser } from "@/features/team/persistence";
-import { ensureProfileForUser } from "@/features/profile/persistence";
+import { ensureProfileForUser, resolveUserAvatarUrl } from "@/features/profile/persistence";
 import type { AppProfile } from "@/features/profile/types";
 import {
   continueAsGuest,
@@ -489,10 +489,8 @@ const Index = () => {
   }, [profile?.email, session?.user?.email, session?.user?.is_anonymous]);
 
   const accountAvatarUrl = useMemo(() => {
-    const metadata = session?.user?.user_metadata ?? {};
-
-    return profile?.avatarUrl ?? metadata.avatar_url ?? metadata.picture ?? null;
-  }, [profile?.avatarUrl, session?.user?.user_metadata]);
+    return profile?.avatarUrl ?? resolveUserAvatarUrl(session?.user) ?? null;
+  }, [profile?.avatarUrl, session?.user]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
