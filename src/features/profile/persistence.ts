@@ -26,11 +26,11 @@ const resolveAvatarUrl = (user: User) => {
   return metadata.avatar_url ?? metadata.picture ?? null;
 };
 
-const buildProfileInsert = (user: User): ProfileInsert => ({
+const buildProfileInsert = (user: User, existingProfile?: ProfileRow | null): ProfileInsert => ({
   id: user.id,
-  email: user.email ?? null,
-  display_name: resolveDisplayName(user),
-  avatar_url: resolveAvatarUrl(user),
+  email: user.email ?? existingProfile?.email ?? null,
+  display_name: resolveDisplayName(user) ?? existingProfile?.display_name ?? null,
+  avatar_url: resolveAvatarUrl(user) ?? existingProfile?.avatar_url ?? null,
 });
 
 const mapProfileRow = (row: ProfileRow): AppProfile => ({
@@ -46,9 +46,15 @@ export const ensureProfileForUser = async (user: User): Promise<AppProfile> => {
     throw new Error("Supabase client unavailable");
   }
 
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select(selectProfileFields)
+    .eq("id", user.id)
+    .maybeSingle();
+
   const { data, error } = await supabase
     .from("profiles")
-    .upsert(buildProfileInsert(user), { onConflict: "id" })
+    .upsert(buildProfileInsert(user, existingProfile), { onConflict: "id" })
     .select(selectProfileFields)
     .single();
 

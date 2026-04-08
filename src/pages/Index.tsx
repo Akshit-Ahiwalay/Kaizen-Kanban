@@ -488,6 +488,12 @@ const Index = () => {
     return profile?.email ?? session?.user?.email ?? null;
   }, [profile?.email, session?.user?.email, session?.user?.is_anonymous]);
 
+  const accountAvatarUrl = useMemo(() => {
+    const metadata = session?.user?.user_metadata ?? {};
+
+    return profile?.avatarUrl ?? metadata.avatar_url ?? metadata.picture ?? null;
+  }, [profile?.avatarUrl, session?.user?.user_metadata]);
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Board is always mounted underneath */}
@@ -505,7 +511,7 @@ const Index = () => {
           statusTone={boardStatusTone}
           accountLabel={accountLabel}
           accountDetail={accountDetail}
-          accountAvatarUrl={profile?.avatarUrl ?? null}
+          accountAvatarUrl={accountAvatarUrl}
           isGuestSession={session?.user?.is_anonymous ?? false}
           onSignOut={handleSignOut}
           canCreateTask={!shouldUseSupabase || !!userId}

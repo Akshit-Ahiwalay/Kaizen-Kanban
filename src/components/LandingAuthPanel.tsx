@@ -59,32 +59,36 @@ const LandingAuthPanel = ({
 
   if (!canUseSupabase) {
     return (
-      <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:px-6 sm:py-6">
-        <EnterButton onClick={onEnter} />
-        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
-          Local board
-        </p>
+      <div className="flex w-full max-w-[26.5rem] justify-center">
+        <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:px-6 sm:py-6">
+          <EnterButton onClick={onEnter} />
+          <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
+            Local board
+          </p>
+        </div>
       </div>
     );
   }
 
   if (hasSession) {
     return (
-      <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:px-6 sm:py-6">
-        <EnterButton onClick={onEnter} disabled={isBusy} />
-        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
-          {isGuestSession ? "Guest access ready" : "Signed in"}
-        </p>
-        {accountLabel && !isGuestSession && (
-          <p className="max-w-[18rem] break-words font-body text-[13px] leading-relaxed text-muted-foreground/62">
-            {accountLabel}
+      <div className="flex w-full max-w-[26.5rem] justify-center">
+        <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:px-6 sm:py-6">
+          <EnterButton onClick={onEnter} disabled={isBusy} />
+          <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
+            {isGuestSession ? "Guest access ready" : "Signed in"}
           </p>
-        )}
-        {statusMessage && (
-          <p className="max-w-[19rem] break-words font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
-            {statusMessage}
-          </p>
-        )}
+          {accountLabel && !isGuestSession && (
+            <p className="max-w-[18rem] break-words font-body text-[13px] leading-relaxed text-muted-foreground/62">
+              {accountLabel}
+            </p>
+          )}
+          {statusMessage && (
+            <p className="max-w-[19rem] break-words font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/48">
+              {statusMessage}
+            </p>
+          )}
+        </div>
       </div>
     );
   }
