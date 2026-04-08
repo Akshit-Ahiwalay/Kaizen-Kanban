@@ -7,6 +7,7 @@ interface AccountMenuProps {
   avatarUrl?: string | null;
   isGuest?: boolean;
   guestUpgradeFeedback?: string | null;
+  guestUpgradeFeedbackTone?: "success" | "error" | "info" | null;
   isUpgradeBusy?: boolean;
   onUpgradeWithGoogle?: () => Promise<void> | void;
   onUpgradeWithEmail?: (email: string) => Promise<boolean>;
@@ -27,6 +28,7 @@ const AccountMenu = ({
   avatarUrl = null,
   isGuest = false,
   guestUpgradeFeedback = null,
+  guestUpgradeFeedbackTone = null,
   isUpgradeBusy = false,
   onUpgradeWithGoogle,
   onUpgradeWithEmail,
@@ -50,6 +52,13 @@ const AccountMenu = ({
   const toneLabel = isGuest ? "Guest" : "Account";
   const canShowAvatar = Boolean(avatarUrl) && !imageFailed;
   const statusMessage = emailError || guestUpgradeFeedback;
+  const statusClassName = emailError
+    ? "text-seal/72"
+    : guestUpgradeFeedbackTone === "success"
+      ? "text-olive/70"
+      : guestUpgradeFeedbackTone === "error"
+        ? "text-seal/72"
+        : "text-muted-foreground/54";
 
   useEffect(() => {
     setImageFailed(false);
@@ -269,7 +278,7 @@ const AccountMenu = ({
               </form>
 
               {statusMessage && (
-                <p className="mt-2.5 font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/54">
+                <p className={`mt-2.5 font-body text-[11px] uppercase tracking-[0.12em] ${statusClassName}`}>
                   {statusMessage}
                 </p>
               )}

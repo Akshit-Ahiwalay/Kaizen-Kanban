@@ -27,7 +27,13 @@ import { ensureProfileForUser, resolveUserAvatarUrl } from "@/features/profile/p
 import type { AppProfile } from "@/features/profile/types";
 import {
   continueAsGuest,
+  clearPendingAuthFlow,
+  getGuestUpgradeErrorMessage,
+  getGuestUpgradePendingMessage,
+  getGuestUpgradeSuccessMessage,
   getCurrentSession,
+  getPendingAuthFlow,
+  readRedirectAuthError,
   sendMagicLink,
   signInWithGoogle,
   signOutSession,
@@ -62,6 +68,9 @@ const Index = () => {
   const [syncError, setSyncError] = useState<string | null>(null);
   const [authFeedback, setAuthFeedback] = useState<string | null>(null);
   const [guestUpgradeFeedback, setGuestUpgradeFeedback] = useState<string | null>(null);
+  const [guestUpgradeFeedbackTone, setGuestUpgradeFeedbackTone] = useState<
+    "success" | "error" | "info" | null
+  >(null);
 
   const handleEnter = useCallback(() => {
     setState("revealing");
@@ -80,6 +89,7 @@ const Index = () => {
     setIsAuthActionLoading(true);
     setAuthFeedback(null);
     setGuestUpgradeFeedback(null);
+    setGuestUpgradeFeedbackTone(null);
 
     try {
       await continueAsGuest();
@@ -99,6 +109,7 @@ const Index = () => {
     setIsAuthActionLoading(true);
     setAuthFeedback(null);
     setGuestUpgradeFeedback(null);
+    setGuestUpgradeFeedbackTone(null);
 
     try {
       await signInWithGoogle();
@@ -119,6 +130,7 @@ const Index = () => {
     setIsAuthActionLoading(true);
     setAuthFeedback(null);
     setGuestUpgradeFeedback(null);
+    setGuestUpgradeFeedbackTone(null);
 
     try {
       await sendMagicLink(email);
@@ -143,6 +155,8 @@ const Index = () => {
       setSyncError(null);
       setAuthFeedback(null);
       setGuestUpgradeFeedback(null);
+      setGuestUpgradeFeedbackTone(null);
+      clearPendingAuthFlow();
     } catch {
       setSyncError("Sign-out issue");
     }
@@ -155,15 +169,18 @@ const Index = () => {
 
     setIsAuthActionLoading(true);
     setGuestUpgradeFeedback(null);
+    setGuestUpgradeFeedbackTone(null);
 
     try {
       const didStart = await upgradeGuestToGoogle();
 
       if (!didStart) {
         setGuestUpgradeFeedback("Upgrade unavailable");
+        setGuestUpgradeFeedbackTone("error");
       }
-    } catch {
-      setGuestUpgradeFeedback("Google upgrade unavailable");
+    } catch (error) {
+      setGuestUpgradeFeedback(getGuestUpgradeErrorMessage(error, "guest-upgrade-google"));
+      setGuestUpgradeFeedbackTone("error");
       setIsAuthActionLoading(false);
       return;
     }
@@ -178,19 +195,27 @@ const Index = () => {
 
     setIsAuthActionLoading(true);
     setGuestUpgradeFeedback(null);
+    setGuestUpgradeFeedbackTone(null);
 
     try {
       const didStart = await upgradeGuestToEmail(email);
 
       if (!didStart) {
         setGuestUpgradeFeedback("Upgrade unavailable");
+        setGuestUpgradeFeedbackTone("error");
         return false;
       }
 
-      setGuestUpgradeFeedback("Check your email to finish upgrade");
+      const pendingFlow = getPendingAuthFlow();
+
+      setGuestUpgradeFeedback(
+        pendingFlow ? getGuestUpgradePendingMessage(pendingFlow) : "Check your email to finish upgrade",
+      );
+      setGuestUpgradeFeedbackTone("info");
       return true;
-    } catch {
-      setGuestUpgradeFeedback("Email upgrade unavailable");
+    } catch (error) {
+      setGuestUpgradeFeedback(getGuestUpgradeErrorMessage(error, "guest-upgrade-email"));
+      setGuestUpgradeFeedbackTone("error");
       return false;
     } finally {
       setIsAuthActionLoading(false);
@@ -381,14 +406,27 @@ const Index = () => {
         return;
       }
 
+      const pendingFlow = getPendingAuthFlow();
+
       setSession(nextSession);
       setUserId(nextSession?.user.id ?? null);
 
       if (!nextSession?.user || nextSession.user.is_anonymous) {
         setProfile(null);
+
+        if (pendingFlow?.returnToBoard) {
+          setState("board");
+        }
+
+        if (pendingFlow?.kind === "guest-upgrade-email") {
+          setGuestUpgradeFeedback(getGuestUpgradePendingMessage(pendingFlow));
+          setGuestUpgradeFeedbackTone("info");
+        }
+
         if (!nextSession?.user) {
           setAuthFeedback(null);
           setGuestUpgradeFeedback(null);
+          setGuestUpgradeFeedbackTone(null);
         }
         return;
       }
@@ -401,8 +439,21 @@ const Index = () => {
         }
 
         setProfile(nextProfile);
-        setAuthFeedback(null);
-        setGuestUpgradeFeedback(null);
+
+        if (pendingFlow) {
+          if (pendingFlow.returnToBoard) {
+            setState("board");
+          }
+
+          setAuthFeedback(getGuestUpgradeSuccessMessage(pendingFlow));
+          setGuestUpgradeFeedback(null);
+          setGuestUpgradeFeedbackTone(null);
+          clearPendingAuthFlow();
+        } else {
+          setAuthFeedback(null);
+          setGuestUpgradeFeedback(null);
+          setGuestUpgradeFeedbackTone(null);
+        }
       } catch {
         if (!isMounted) {
           return;
@@ -423,6 +474,21 @@ const Index = () => {
 
     void (async () => {
       try {
+        const redirectError = readRedirectAuthError();
+        const pendingFlow = getPendingAuthFlow();
+
+        if (redirectError && pendingFlow) {
+          if (pendingFlow.returnToBoard) {
+            setState("board");
+            setGuestUpgradeFeedback(getGuestUpgradeErrorMessage(redirectError, pendingFlow.kind));
+            setGuestUpgradeFeedbackTone("error");
+          } else {
+            setAuthFeedback(getGuestUpgradeErrorMessage(redirectError, pendingFlow.kind));
+          }
+
+          clearPendingAuthFlow();
+        }
+
         const currentSession = await getCurrentSession();
 
         await applySession(currentSession);
@@ -513,8 +579,12 @@ const Index = () => {
       return "Syncing";
     }
 
+    if (session?.user && !session.user.is_anonymous && authFeedback) {
+      return authFeedback;
+    }
+
     return null;
-  }, [isAuthLoading, isBoardLoading, syncError]);
+  }, [authFeedback, isAuthLoading, isBoardLoading, session?.user, syncError]);
 
   const boardStatusTone = useMemo(() => {
     if (!shouldUseSupabase) {
@@ -529,8 +599,12 @@ const Index = () => {
       return "loading" as const;
     }
 
+    if (session?.user && !session.user.is_anonymous && authFeedback) {
+      return authFeedback === "Profile unavailable" ? ("error" as const) : ("guest" as const);
+    }
+
     return null;
-  }, [isAuthLoading, isBoardLoading, syncError]);
+  }, [authFeedback, isAuthLoading, isBoardLoading, session?.user, syncError]);
 
   const accountLabel = useMemo(() => {
     if (session?.user?.is_anonymous) {
@@ -572,6 +646,7 @@ const Index = () => {
           accountAvatarUrl={accountAvatarUrl}
           isGuestSession={session?.user?.is_anonymous ?? false}
           guestUpgradeFeedback={session?.user?.is_anonymous ? guestUpgradeFeedback : null}
+          guestUpgradeFeedbackTone={session?.user?.is_anonymous ? guestUpgradeFeedbackTone : null}
           isUpgradeBusy={isAuthActionLoading}
           onUpgradeGuestWithGoogle={handleUpgradeGuestWithGoogle}
           onUpgradeGuestWithEmail={handleUpgradeGuestWithEmail}
