@@ -180,7 +180,7 @@ const TaskDetailDialog = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-foreground/12 px-4 py-8 backdrop-blur-[3px]">
+    <div className="absolute inset-0 z-50 flex items-start justify-center overflow-x-hidden overflow-y-auto bg-foreground/12 px-3 py-4 backdrop-blur-[3px] sm:items-center sm:px-4 sm:py-8">
       <button
         type="button"
         className="absolute inset-0 cursor-default"
@@ -188,8 +188,8 @@ const TaskDetailDialog = ({
         aria-label="Close task detail dialog"
       />
 
-      <div className="relative z-10 w-full max-w-2xl border border-border/30 bg-[hsl(var(--background)/0.96)] p-7 shadow-[0_28px_90px_-48px_rgba(0,0,0,0.42)] backdrop-blur-[10px] sm:p-8">
-        <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="relative z-10 flex w-full max-w-2xl flex-col overflow-hidden border border-border/30 bg-[hsl(var(--background)/0.96)] p-5 shadow-[0_28px_90px_-48px_rgba(0,0,0,0.42)] backdrop-blur-[10px] max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)] sm:p-8">
+        <div className="mb-6 flex items-start justify-between gap-4 sm:mb-8">
           <div>
             <p className="font-display text-[11px] tracking-[0.32em] text-muted-foreground/56">
               TASK DETAIL
@@ -205,7 +205,8 @@ const TaskDetailDialog = ({
           </button>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="flex flex-1 flex-col overflow-hidden" onSubmit={handleSubmit}>
+          <div className="space-y-6 overflow-y-auto pr-1">
           <div className="space-y-2.5">
             <label htmlFor="edit-task-title" className={fieldLabelClassName}>
               Title
@@ -358,16 +359,18 @@ const TaskDetailDialog = ({
             </div>
           </div>
 
-          <div className="border-t border-border/18 pt-5">
+          </div>
+
+          <div className="mt-6 border-t border-border/18 pt-5 sm:mt-5">
             {isConfirmingDelete ? (
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="font-body text-[11px] uppercase tracking-[0.14em] text-seal/62">
                   Delete this task?
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:items-center sm:gap-3">
                   <button
                     type="button"
-                    className="px-2.5 py-1 text-[11px] font-body uppercase tracking-[0.16em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground"
+                    className="w-full px-2.5 py-1 text-[11px] font-body uppercase tracking-[0.16em] text-muted-foreground/60 transition-colors duration-300 hover:text-foreground sm:w-auto"
                     onClick={() => {
                       setIsConfirmingDelete(false);
                       setDeleteError("");
@@ -378,7 +381,7 @@ const TaskDetailDialog = ({
                   </button>
                   <button
                     type="button"
-                    className="border border-seal/24 px-3.5 py-2 text-[11px] font-body uppercase tracking-[0.16em] text-seal/74 transition-all duration-300 hover:border-seal/42 hover:text-seal/86 disabled:cursor-not-allowed disabled:border-seal/12 disabled:text-seal/38"
+                    className="w-full border border-seal/24 px-3.5 py-2 text-[11px] font-body uppercase tracking-[0.16em] text-seal/74 transition-all duration-300 hover:border-seal/42 hover:text-seal/86 disabled:cursor-not-allowed disabled:border-seal/12 disabled:text-seal/38 sm:w-auto"
                     onClick={handleDelete}
                     disabled={isDeleting}
                   >
@@ -398,14 +401,14 @@ const TaskDetailDialog = ({
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border/12 pt-5">
-            <div className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/48">
+          <div className="mt-5 flex flex-col gap-3 border-t border-border/12 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-h-[1rem] font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/48">
               {deleteError ? deleteError : saveError ? saveError : isDeleting ? "Deleting" : isSaving ? "Saving" : ""}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:items-center sm:gap-3">
               <button
                 type="button"
-                className="px-3 py-2 text-[11px] font-body uppercase tracking-[0.18em] text-muted-foreground/64 transition-colors duration-300 hover:text-foreground"
+                className="w-full px-3 py-2 text-[11px] font-body uppercase tracking-[0.18em] text-muted-foreground/64 transition-colors duration-300 hover:text-foreground sm:w-auto"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
@@ -413,7 +416,7 @@ const TaskDetailDialog = ({
               <button
                 type="submit"
                 disabled={isSaving || isDeleting}
-                className="border border-border/32 bg-[hsl(var(--background)/0.42)] px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
+                className="w-full border border-border/32 bg-[hsl(var(--background)/0.42)] px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38 sm:w-auto"
               >
                 {isSaving ? "Saving..." : "Save"}
               </button>

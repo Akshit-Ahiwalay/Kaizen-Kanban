@@ -73,7 +73,7 @@ const TeamMembersDialog = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-foreground/12 px-4 py-8 backdrop-blur-[3px]">
+    <div className="absolute inset-0 z-50 flex items-start justify-center overflow-x-hidden overflow-y-auto bg-foreground/12 px-3 py-4 backdrop-blur-[3px] sm:items-center sm:px-4 sm:py-8">
       <button
         type="button"
         className="absolute inset-0 cursor-default"
@@ -81,8 +81,8 @@ const TeamMembersDialog = ({
         onClick={() => onOpenChange(false)}
       />
 
-      <div className="relative z-10 w-full max-w-lg border border-border/30 bg-[hsl(var(--background)/0.96)] p-7 shadow-[0_28px_90px_-48px_rgba(0,0,0,0.42)] backdrop-blur-[10px] sm:p-8">
-        <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden border border-border/30 bg-[hsl(var(--background)/0.96)] p-5 shadow-[0_28px_90px_-48px_rgba(0,0,0,0.42)] backdrop-blur-[10px] max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)] sm:p-8">
+        <div className="mb-6 flex items-start justify-between gap-4 sm:mb-8">
           <div>
             <p className="font-display text-[11px] tracking-[0.32em] text-muted-foreground/56">
               TEAM
@@ -98,7 +98,7 @@ const TeamMembersDialog = ({
           </button>
         </div>
 
-        <div className="mb-7 flex flex-wrap gap-2.5">
+        <div className="mb-6 flex max-h-44 flex-wrap gap-2.5 overflow-y-auto pr-1 sm:mb-7 sm:max-h-52">
           {members.length === 0 ? (
             <div className="w-full border border-dashed border-border/24 bg-[hsl(var(--background)/0.48)] px-4 py-5 text-center font-body text-[13px] text-muted-foreground/60">
               No members yet
@@ -125,8 +125,9 @@ const TeamMembersDialog = ({
           )}
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-2.5">
+        <form className="flex flex-1 flex-col overflow-hidden" onSubmit={handleSubmit}>
+          <div className="space-y-6 overflow-y-auto pr-1">
+            <div className="space-y-2.5">
             <label htmlFor="team-member-name" className={fieldLabelClassName}>
               Name
             </label>
@@ -141,40 +142,41 @@ const TeamMembersDialog = ({
               }}
               placeholder="Member name"
             />
-          </div>
+            </div>
 
-          <div className="space-y-2.5">
-            <p className={fieldLabelClassName}>
-              Color
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {TEAM_MEMBER_COLORS.map((swatch) => {
-                const isSelected = swatch === color;
+            <div className="space-y-2.5">
+              <p className={fieldLabelClassName}>
+                Color
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {TEAM_MEMBER_COLORS.map((swatch) => {
+                  const isSelected = swatch === color;
 
-                return (
-                  <button
-                    key={swatch}
-                    type="button"
-                    aria-label={`Choose member color ${swatch}`}
-                    className={`h-9 w-9 rounded-full border transition-transform duration-200 ${
-                      isSelected ? "scale-105 border-foreground/26" : "border-border/20"
-                    }`}
-                    style={{ backgroundColor: swatch }}
-                    onClick={() => setColor(swatch)}
-                  />
-                );
-              })}
+                  return (
+                    <button
+                      key={swatch}
+                      type="button"
+                      aria-label={`Choose member color ${swatch}`}
+                      className={`h-9 w-9 rounded-full border transition-transform duration-200 ${
+                        isSelected ? "scale-105 border-foreground/26" : "border-border/20"
+                      }`}
+                      style={{ backgroundColor: swatch }}
+                      onClick={() => setColor(swatch)}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border/18 pt-5">
-            <div className="font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/48">
+          <div className="mt-6 flex flex-col gap-3 border-t border-border/18 pt-5 sm:mt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-h-[1rem] font-body text-[11px] uppercase tracking-[0.14em] text-muted-foreground/48">
               {error || (isSaving ? "Saving" : "")}
             </div>
             <button
               type="submit"
               disabled={isSaving}
-              className="border border-border/32 bg-[hsl(var(--background)/0.42)] px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38"
+              className="w-full border border-border/32 bg-[hsl(var(--background)/0.42)] px-4.5 py-2.5 text-[11px] font-body uppercase tracking-[0.18em] text-foreground/74 transition-all duration-300 hover:border-border/56 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/38 sm:w-auto"
             >
               {isSaving ? "Saving..." : "Add Member"}
             </button>

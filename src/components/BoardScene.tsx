@@ -218,25 +218,26 @@ const BoardScene = ({
           <span className="font-display text-[18px] tracking-[0.14em] text-foreground/68 sm:text-[20px]">
             改善
           </span>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="border border-border/24 bg-background/48 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-foreground/66">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="border border-border/24 bg-background/48 px-2.5 py-1.5 text-[10px] font-body uppercase tracking-[0.14em] text-foreground/66 sm:px-3 sm:text-[11px]">
               {boardStats.totalTasks} total
             </span>
-            <span className="border border-olive/18 bg-olive/7 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-olive/70">
+            <span className="border border-olive/18 bg-olive/7 px-2.5 py-1.5 text-[10px] font-body uppercase tracking-[0.14em] text-olive/70 sm:px-3 sm:text-[11px]">
               {boardStats.doneTasks} done
             </span>
-            <span className="border border-seal/18 bg-seal/7 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-seal/72">
+            <span className="border border-seal/18 bg-seal/7 px-2.5 py-1.5 text-[10px] font-body uppercase tracking-[0.14em] text-seal/72 sm:px-3 sm:text-[11px]">
               {boardStats.overdueTasks} overdue
             </span>
-            <span className="border border-border/24 bg-background/48 px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] text-muted-foreground/64">
+            <span className="border border-border/24 bg-background/48 px-2.5 py-1.5 text-[10px] font-body uppercase tracking-[0.14em] text-muted-foreground/64 sm:px-3 sm:text-[11px]">
               {boardStats.inProgressTasks} in progress
             </span>
           </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <div className="flex w-full flex-col gap-2.5 xl:w-auto xl:items-end">
+            <div className="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3 xl:justify-end">
             {statusText && (
               <span
-                className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-[11px] font-body uppercase tracking-[0.14em] ${statusToneClasses}`}
+                className={`inline-flex max-w-full items-center gap-1.5 border px-2.5 py-1.5 text-[10px] font-body uppercase tracking-[0.14em] sm:px-3 sm:text-[11px] ${statusToneClasses}`}
               >
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
@@ -259,10 +260,12 @@ const BoardScene = ({
                 onSignOut={onSignOut}
               />
             )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 xl:justify-end">
             <button
               type="button"
               aria-label="Manage team members"
-              className="p-2.5 text-muted-foreground/58 transition-colors duration-300 hover:text-foreground/82 disabled:cursor-not-allowed disabled:text-muted-foreground/26"
+              className="inline-flex h-10 w-10 items-center justify-center border border-border/24 bg-background/44 text-muted-foreground/58 transition-colors duration-300 hover:border-border/40 hover:text-foreground/82 disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/26"
               onClick={() => setIsTeamDialogOpen(true)}
               disabled={!canCreateTask}
             >
@@ -271,10 +274,10 @@ const BoardScene = ({
             <button
               type="button"
               aria-label="Toggle search and filters"
-              className={`p-2.5 transition-colors duration-300 ${
+              className={`inline-flex h-10 w-10 items-center justify-center border bg-background/44 transition-colors duration-300 ${
                 isFilterTrayVisible
-                  ? "text-foreground/78"
-                  : "text-muted-foreground/58 hover:text-foreground/82"
+                  ? "border-border/36 text-foreground/78"
+                  : "border-border/24 text-muted-foreground/58 hover:border-border/40 hover:text-foreground/82"
               }`}
               onClick={() => setIsFilterTrayOpen((current) => !current)}
             >
@@ -282,13 +285,14 @@ const BoardScene = ({
             </button>
             <button
               type="button"
-              className="flex items-center gap-2 border border-border/38 px-4 py-2 text-[12px] font-body uppercase tracking-[0.14em] text-foreground/66 transition-all duration-300 hover:border-border/56 hover:text-foreground/84 disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/32"
+              className="inline-flex min-h-10 items-center justify-center gap-2 border border-border/38 px-3.5 py-2 text-[11px] font-body uppercase tracking-[0.14em] text-foreground/66 transition-all duration-300 hover:border-border/56 hover:text-foreground/84 disabled:cursor-not-allowed disabled:border-border/18 disabled:text-muted-foreground/32 sm:px-4 sm:text-[12px]"
               onClick={() => setIsCreateDialogOpen(true)}
               disabled={!canCreateTask}
             >
               <Plus size={12} />
               <span>New Task</span>
             </button>
+            </div>
           </div>
           </div>
 
