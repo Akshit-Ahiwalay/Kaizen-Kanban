@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface AccountMenuProps {
   label: string;
   detail?: string | null;
   avatarUrl?: string | null;
   isGuest?: boolean;
+  guestUpgradeFeedback?: string | null;
+  isUpgradeBusy?: boolean;
+  onUpgradeWithGoogle?: () => Promise<void> | void;
+  onUpgradeWithEmail?: (email: string) => Promise<boolean>;
   onSignOut: () => Promise<void> | void;
 }
 
@@ -21,11 +26,18 @@ const AccountMenu = ({
   detail = null,
   avatarUrl = null,
   isGuest = false,
+  guestUpgradeFeedback = null,
+  isUpgradeBusy = false,
+  onUpgradeWithGoogle,
+  onUpgradeWithEmail,
   onSignOut,
 }: AccountMenuProps) => {
   const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
   const [mobileMenuPosition, setMobileMenuPosition] = useState<{
     left: number;
     top: number;
@@ -37,10 +49,19 @@ const AccountMenu = ({
   const initials = useMemo(() => getInitials(label || (isGuest ? "Guest" : "User")), [isGuest, label]);
   const toneLabel = isGuest ? "Guest" : "Account";
   const canShowAvatar = Boolean(avatarUrl) && !imageFailed;
+  const statusMessage = emailError || guestUpgradeFeedback;
 
   useEffect(() => {
     setImageFailed(false);
   }, [avatarUrl]);
+
+  useEffect(() => {
+    if (!guestUpgradeFeedback) {
+      return;
+    }
+
+    setEmailError("");
+  }, [guestUpgradeFeedback]);
 
   useEffect(() => {
     if (!open) {
@@ -116,6 +137,36 @@ const AccountMenu = ({
     };
   }, [open]);
 
+  const handleEmailUpgrade = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!onUpgradeWithEmail) {
+      return;
+    }
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setEmailError("Email is required.");
+      return;
+    }
+
+    setEmailError("");
+    setIsEmailSubmitting(true);
+
+    try {
+      const didStart = await onUpgradeWithEmail(trimmedEmail);
+
+      if (!didStart) {
+        return;
+      }
+
+      setEmail("");
+    } finally {
+      setIsEmailSubmitting(false);
+    }
+  };
+
   return (
     <div className="relative max-w-full" ref={containerRef}>
       <button
@@ -175,10 +226,60 @@ const AccountMenu = ({
             )}
           </div>
 
+          {isGuest && (
+            <div className="mb-3 border-b border-border/18 pb-3">
+              <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50">
+                Upgrade
+              </p>
+              <p className="mt-1.5 font-body text-[12px] leading-relaxed text-muted-foreground/62">
+                Keep this board and attach a permanent account.
+              </p>
+
+              <button
+                type="button"
+                className="mt-3 w-full border border-border/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/40 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+                disabled={isUpgradeBusy || isEmailSubmitting || !onUpgradeWithGoogle}
+                onClick={() => void onUpgradeWithGoogle?.()}
+              >
+                {isUpgradeBusy ? "Preparing..." : "Upgrade with Google"}
+              </button>
+
+              <form className="mt-2.5 flex flex-col gap-2.5" onSubmit={handleEmailUpgrade}>
+                <Input
+                  aria-label="Upgrade guest account email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    if (emailError) {
+                      setEmailError("");
+                    }
+                  }}
+                  placeholder="Email address"
+                  className="border-border/24 bg-background/68 text-[12px] text-foreground/76 placeholder:text-muted-foreground/36"
+                  disabled={isUpgradeBusy || isEmailSubmitting}
+                />
+                <button
+                  type="submit"
+                  className="w-full border border-border/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/40 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+                  disabled={isUpgradeBusy || isEmailSubmitting || !onUpgradeWithEmail}
+                >
+                  {isEmailSubmitting ? "Sending..." : "Upgrade with Email"}
+                </button>
+              </form>
+
+              {statusMessage && (
+                <p className="mt-2.5 font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/54">
+                  {statusMessage}
+                </p>
+              )}
+            </div>
+          )}
+
           <button
             type="button"
             className="w-full border border-border/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/40 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
-            disabled={isSigningOut}
+            disabled={isSigningOut || isUpgradeBusy || isEmailSubmitting}
             onClick={async () => {
               setIsSigningOut(true);
 

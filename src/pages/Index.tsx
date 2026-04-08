@@ -31,6 +31,8 @@ import {
   sendMagicLink,
   signInWithGoogle,
   signOutSession,
+  upgradeGuestToEmail,
+  upgradeGuestToGoogle,
 } from "@/integrations/supabase/auth";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 
@@ -59,6 +61,7 @@ const Index = () => {
   const [isBoardLoading, setIsBoardLoading] = useState(shouldUseSupabase);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [authFeedback, setAuthFeedback] = useState<string | null>(null);
+  const [guestUpgradeFeedback, setGuestUpgradeFeedback] = useState<string | null>(null);
 
   const handleEnter = useCallback(() => {
     setState("revealing");
@@ -76,6 +79,7 @@ const Index = () => {
 
     setIsAuthActionLoading(true);
     setAuthFeedback(null);
+    setGuestUpgradeFeedback(null);
 
     try {
       await continueAsGuest();
@@ -94,6 +98,7 @@ const Index = () => {
 
     setIsAuthActionLoading(true);
     setAuthFeedback(null);
+    setGuestUpgradeFeedback(null);
 
     try {
       await signInWithGoogle();
@@ -113,6 +118,7 @@ const Index = () => {
 
     setIsAuthActionLoading(true);
     setAuthFeedback(null);
+    setGuestUpgradeFeedback(null);
 
     try {
       await sendMagicLink(email);
@@ -136,8 +142,58 @@ const Index = () => {
       setState("landing");
       setSyncError(null);
       setAuthFeedback(null);
+      setGuestUpgradeFeedback(null);
     } catch {
       setSyncError("Sign-out issue");
+    }
+  }, []);
+
+  const handleUpgradeGuestWithGoogle = useCallback(async () => {
+    if (!shouldUseSupabase) {
+      return;
+    }
+
+    setIsAuthActionLoading(true);
+    setGuestUpgradeFeedback(null);
+
+    try {
+      const didStart = await upgradeGuestToGoogle();
+
+      if (!didStart) {
+        setGuestUpgradeFeedback("Upgrade unavailable");
+      }
+    } catch {
+      setGuestUpgradeFeedback("Google upgrade unavailable");
+      setIsAuthActionLoading(false);
+      return;
+    }
+
+    setIsAuthActionLoading(false);
+  }, []);
+
+  const handleUpgradeGuestWithEmail = useCallback(async (email: string) => {
+    if (!shouldUseSupabase) {
+      return false;
+    }
+
+    setIsAuthActionLoading(true);
+    setGuestUpgradeFeedback(null);
+
+    try {
+      const didStart = await upgradeGuestToEmail(email);
+
+      if (!didStart) {
+        setGuestUpgradeFeedback("Upgrade unavailable");
+        return false;
+      }
+
+      setGuestUpgradeFeedback("Check your email to finish upgrade");
+      return true;
+    } catch {
+      setGuestUpgradeFeedback("Email upgrade unavailable");
+      return false;
+    } finally {
+      setIsAuthActionLoading(false);
     }
   }, []);
 
@@ -330,7 +386,10 @@ const Index = () => {
 
       if (!nextSession?.user || nextSession.user.is_anonymous) {
         setProfile(null);
-        setAuthFeedback(null);
+        if (!nextSession?.user) {
+          setAuthFeedback(null);
+          setGuestUpgradeFeedback(null);
+        }
         return;
       }
 
@@ -343,6 +402,7 @@ const Index = () => {
 
         setProfile(nextProfile);
         setAuthFeedback(null);
+        setGuestUpgradeFeedback(null);
       } catch {
         if (!isMounted) {
           return;
@@ -511,6 +571,10 @@ const Index = () => {
           accountDetail={accountDetail}
           accountAvatarUrl={accountAvatarUrl}
           isGuestSession={session?.user?.is_anonymous ?? false}
+          guestUpgradeFeedback={session?.user?.is_anonymous ? guestUpgradeFeedback : null}
+          isUpgradeBusy={isAuthActionLoading}
+          onUpgradeGuestWithGoogle={handleUpgradeGuestWithGoogle}
+          onUpgradeGuestWithEmail={handleUpgradeGuestWithEmail}
           onSignOut={handleSignOut}
           canCreateTask={!shouldUseSupabase || !!userId}
           isBoardLoading={isAuthLoading || isBoardLoading}

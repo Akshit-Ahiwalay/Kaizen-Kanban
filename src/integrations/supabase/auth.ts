@@ -46,6 +46,16 @@ export const continueAsGuest = async (): Promise<Session | null> => {
   return data.session;
 };
 
+const getAnonymousSession = async () => {
+  const session = await getCurrentSession();
+
+  if (!session?.user?.is_anonymous) {
+    return null;
+  }
+
+  return session;
+};
+
 export const signInWithGoogle = async () => {
   if (!supabase) {
     return;
@@ -63,6 +73,31 @@ export const signInWithGoogle = async () => {
   }
 };
 
+export const upgradeGuestToGoogle = async () => {
+  if (!supabase) {
+    return false;
+  }
+
+  const session = await getAnonymousSession();
+
+  if (!session) {
+    return false;
+  }
+
+  const { error } = await supabase.auth.linkIdentity({
+    provider: "google",
+    options: {
+      redirectTo: getAuthRedirectUrl(),
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return true;
+};
+
 export const sendMagicLink = async (email: string) => {
   if (!supabase) {
     return;
@@ -78,6 +113,31 @@ export const sendMagicLink = async (email: string) => {
   if (error) {
     throw error;
   }
+};
+
+export const upgradeGuestToEmail = async (email: string) => {
+  if (!supabase) {
+    return false;
+  }
+
+  const session = await getAnonymousSession();
+
+  if (!session) {
+    return false;
+  }
+
+  const { error } = await supabase.auth.updateUser(
+    { email },
+    {
+      emailRedirectTo: getAuthRedirectUrl(),
+    },
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return true;
 };
 
 export const signOutSession = async () => {

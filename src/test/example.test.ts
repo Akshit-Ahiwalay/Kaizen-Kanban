@@ -86,9 +86,8 @@ describe("Index page", () => {
     expect(await screen.findByLabelText("Assignee Mina")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /toggle search and filters/i }));
-    fireEvent.change(screen.getByLabelText("Filter by assignee"), {
-      target: { value: minaOption?.value },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: /filter by assignee/i }));
+    fireEvent.click(screen.getByRole("option", { name: "Mina" }));
 
     expect(screen.getByText("Design landing page")).toBeInTheDocument();
     expect(screen.queryByText("Database setup")).not.toBeInTheDocument();

@@ -51,6 +51,10 @@ interface BoardSceneProps {
   accountDetail?: string | null;
   accountAvatarUrl?: string | null;
   isGuestSession?: boolean;
+  guestUpgradeFeedback?: string | null;
+  isUpgradeBusy?: boolean;
+  onUpgradeGuestWithGoogle?: () => Promise<void> | void;
+  onUpgradeGuestWithEmail?: (email: string) => Promise<boolean>;
   onSignOut: () => Promise<void> | void;
   canCreateTask?: boolean;
   isBoardLoading?: boolean;
@@ -71,6 +75,10 @@ const BoardScene = ({
   accountDetail = null,
   accountAvatarUrl = null,
   isGuestSession = false,
+  guestUpgradeFeedback = null,
+  isUpgradeBusy = false,
+  onUpgradeGuestWithGoogle,
+  onUpgradeGuestWithEmail,
   onSignOut,
   canCreateTask = true,
   isBoardLoading = false,
@@ -257,6 +265,10 @@ const BoardScene = ({
                 detail={accountDetail}
                 avatarUrl={accountAvatarUrl}
                 isGuest={isGuestSession}
+                guestUpgradeFeedback={guestUpgradeFeedback}
+                isUpgradeBusy={isUpgradeBusy}
+                onUpgradeWithGoogle={onUpgradeGuestWithGoogle}
+                onUpgradeWithEmail={onUpgradeGuestWithEmail}
                 onSignOut={onSignOut}
               />
             )}
