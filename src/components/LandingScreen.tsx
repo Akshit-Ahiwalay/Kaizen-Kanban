@@ -6,6 +6,7 @@ interface LandingScreenProps {
   canUseSupabase: boolean;
   hasSession: boolean;
   isGuestSession: boolean;
+  requiresPermanentAccount?: boolean;
   accountLabel?: string | null;
   authFeedback?: string | null;
   isAuthBusy?: boolean;
@@ -19,6 +20,7 @@ const LandingScreen = ({
   canUseSupabase,
   hasSession,
   isGuestSession,
+  requiresPermanentAccount = false,
   accountLabel = null,
   authFeedback = null,
   isAuthBusy = false,
@@ -106,6 +108,7 @@ const LandingScreen = ({
             canUseSupabase={canUseSupabase}
             hasSession={hasSession}
             isGuestSession={isGuestSession}
+            requiresPermanentAccount={requiresPermanentAccount}
             accountLabel={accountLabel}
             feedback={authFeedback}
             isBusy={isAuthBusy}

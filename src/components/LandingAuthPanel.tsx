@@ -6,6 +6,7 @@ interface LandingAuthPanelProps {
   canUseSupabase: boolean;
   hasSession: boolean;
   isGuestSession: boolean;
+  requiresPermanentAccount?: boolean;
   accountLabel?: string | null;
   feedback?: string | null;
   isBusy?: boolean;
@@ -19,6 +20,7 @@ const LandingAuthPanel = ({
   canUseSupabase,
   hasSession,
   isGuestSession,
+  requiresPermanentAccount = false,
   accountLabel,
   feedback = null,
   isBusy = false,
@@ -70,7 +72,7 @@ const LandingAuthPanel = ({
     );
   }
 
-  if (hasSession) {
+  if (hasSession && !(isGuestSession && requiresPermanentAccount)) {
     return (
       <div className="flex w-full max-w-[26.5rem] justify-center">
         <div className="flex w-full max-w-[23rem] flex-col items-center gap-3.5 border border-border/18 bg-[hsl(var(--background)/0.42)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:px-6 sm:py-6">
@@ -95,23 +97,27 @@ const LandingAuthPanel = ({
 
   return (
     <div className="flex w-full max-w-[26.5rem] flex-col items-center gap-3 sm:gap-4">
-      <div className="flex w-full flex-col items-center gap-3 border border-border/18 bg-[hsl(var(--background)/0.38)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:gap-3.5 sm:px-6 sm:py-6">
-        <EnterButton onClick={() => void onContinueAsGuest()} disabled={isBusy || isSendingLink} />
-        <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
-          Continue as guest
-        </p>
-        <p className="max-w-[18rem] font-body text-[13px] leading-relaxed text-muted-foreground/58">
-          Open the board immediately with local persistence and the full task flow.
-        </p>
-      </div>
+      {!requiresPermanentAccount && (
+        <div className="flex w-full flex-col items-center gap-3 border border-border/18 bg-[hsl(var(--background)/0.38)] px-5 py-5 text-center shadow-[inset_0_1px_0_hsl(var(--background)/0.54)] sm:gap-3.5 sm:px-6 sm:py-6">
+          <EnterButton onClick={() => void onContinueAsGuest()} disabled={isBusy || isSendingLink} />
+          <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/46">
+            Continue as guest
+          </p>
+          <p className="max-w-[18rem] font-body text-[13px] leading-relaxed text-muted-foreground/58">
+            Open the board immediately with local persistence and the full task flow.
+          </p>
+        </div>
+      )}
 
       <div className="flex w-full flex-col gap-3.5 border border-border/20 bg-[hsl(var(--background)/0.46)] px-5 py-5 shadow-[inset_0_1px_0_hsl(var(--background)/0.56)] sm:gap-4 sm:px-6 sm:py-6">
         <div className="space-y-1 text-center sm:space-y-1.5">
           <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground/44">
-            Or sign in
+            {requiresPermanentAccount ? "Sign in to accept invite" : "Or sign in"}
           </p>
           <p className="mx-auto max-w-[18rem] font-body text-[13px] leading-relaxed text-muted-foreground/58">
-            Sync your board with Google or a magic link.
+            {requiresPermanentAccount
+              ? "Use Google or a magic link with the invited email address."
+              : "Sync your board with Google or a magic link."}
           </p>
         </div>
 

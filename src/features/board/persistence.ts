@@ -49,7 +49,7 @@ const mapRowsToColumns = (rows: TaskRow[]): Column[] => {
   return columns;
 };
 
-const buildTaskInsert = (task: KanbanCard, userId: string): TaskInsert => ({
+const buildTaskInsert = (task: KanbanCard, userId: string, workspaceId: string): TaskInsert => ({
   id: task.id,
   title: task.title,
   description: task.description ?? null,
@@ -58,6 +58,7 @@ const buildTaskInsert = (task: KanbanCard, userId: string): TaskInsert => ({
   due_date: task.dueDateValue ?? null,
   assignee_id: task.assigneeId ?? null,
   sort_order: task.sortOrder ?? 0,
+  workspace_id: workspaceId,
   user_id: userId,
 });
 
@@ -91,15 +92,17 @@ const buildTaskOrderUpdates = (
   });
 };
 
-export const fetchBoardColumnsForUser = async (userId: string): Promise<Column[]> => {
+export const fetchBoardColumnsForWorkspace = async (workspaceId: string): Promise<Column[]> => {
   if (!supabase) {
     return createEmptyBoardColumns();
   }
 
   const { data, error } = await supabase
     .from("tasks")
-    .select("id, title, description, status, priority, due_date, assignee_id, sort_order, user_id, created_at")
-    .eq("user_id", userId)
+    .select(
+      "id, title, description, status, priority, due_date, assignee_id, sort_order, workspace_id, user_id, created_at",
+    )
+    .eq("workspace_id", workspaceId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
@@ -110,20 +113,26 @@ export const fetchBoardColumnsForUser = async (userId: string): Promise<Column[]
   return mapRowsToColumns(data ?? []);
 };
 
-export const createTaskForUser = async (userId: string, task: KanbanCard) => {
+export const createTaskForWorkspace = async (
+  userId: string,
+  workspaceId: string,
+  task: KanbanCard,
+) => {
   if (!supabase) {
     return;
   }
 
-  const { error } = await supabase.from("tasks").insert(buildTaskInsert(task, userId));
+  const { error } = await supabase
+    .from("tasks")
+    .insert(buildTaskInsert(task, userId, workspaceId));
 
   if (error) {
     throw error;
   }
 };
 
-export const syncTaskOrderForUser = async (
-  userId: string,
+export const syncTaskOrderForWorkspace = async (
+  workspaceId: string,
   columns: Column[],
   columnIds: BoardColumnId[],
 ) => {
@@ -142,7 +151,7 @@ export const syncTaskOrderForUser = async (
           sort_order: update.sort_order,
         })
         .eq("id", update.id)
-        .eq("user_id", userId);
+        .eq("workspace_id", workspaceId);
 
       if (error) {
         throw error;
@@ -151,7 +160,7 @@ export const syncTaskOrderForUser = async (
   );
 };
 
-export const updateTaskForUser = async (userId: string, task: UpdateTaskInput) => {
+export const updateTaskForWorkspace = async (workspaceId: string, task: UpdateTaskInput) => {
   if (!supabase) {
     return;
   }
@@ -160,14 +169,14 @@ export const updateTaskForUser = async (userId: string, task: UpdateTaskInput) =
     .from("tasks")
     .update(buildTaskUpdate(task))
     .eq("id", task.taskId)
-    .eq("user_id", userId);
+    .eq("workspace_id", workspaceId);
 
   if (error) {
     throw error;
   }
 };
 
-export const deleteTaskForUser = async (userId: string, taskId: string) => {
+export const deleteTaskForWorkspace = async (workspaceId: string, taskId: string) => {
   if (!supabase) {
     return;
   }
@@ -176,7 +185,7 @@ export const deleteTaskForUser = async (userId: string, taskId: string) => {
     .from("tasks")
     .delete()
     .eq("id", taskId)
-    .eq("user_id", userId);
+    .eq("workspace_id", workspaceId);
 
   if (error) {
     throw error;

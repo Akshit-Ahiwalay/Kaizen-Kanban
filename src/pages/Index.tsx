@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import LandingScreen from "@/components/LandingScreen";
 import BoardScene from "@/components/BoardScene";
@@ -14,18 +14,33 @@ import { attachAssigneesToColumns } from "@/features/board/assignees";
 import { createEmptyBoardColumns, createInitialBoardColumns } from "@/features/board/data";
 import { createTaskCard, deleteTask, insertTaskIntoColumn, moveTask, updateTask } from "@/features/board/mutations";
 import {
-  createTaskForUser,
-  deleteTaskForUser,
-  fetchBoardColumnsForUser,
-  syncTaskOrderForUser,
-  updateTaskForUser,
+  createTaskForWorkspace,
+  deleteTaskForWorkspace,
+  fetchBoardColumnsForWorkspace,
+  syncTaskOrderForWorkspace,
+  updateTaskForWorkspace,
 } from "@/features/board/persistence";
 import { createInitialTeamMembers } from "@/features/team/data";
 import { createTeamMember } from "@/features/team/mutations";
-import { createTeamMemberForUser, fetchTeamMembersForUser } from "@/features/team/persistence";
+import { createTeamMemberForWorkspace, fetchTeamMembersForWorkspace } from "@/features/team/persistence";
 import { ensureProfileForUser, resolveUserAvatarUrl } from "@/features/profile/persistence";
 import type { AppProfile } from "@/features/profile/types";
+import { ensurePersonalWorkspaceForCurrentUser } from "@/features/workspace/persistence";
 import {
+  acceptWorkspaceInvitation,
+  clearStoredActiveWorkspaceId,
+  createWorkspaceInvitation,
+  fetchWorkspaceInvitationsForOwner,
+  fetchWorkspacesForCurrentUser,
+  getStoredActiveWorkspaceId,
+  getWorkspaceInvitationErrorMessage,
+  revokeWorkspaceInvitation,
+  storeActiveWorkspaceId,
+  type WorkspaceInvitationSummary,
+  type WorkspaceSummary,
+} from "@/features/workspace/persistence";
+import {
+  clearPendingWorkspaceInviteToken,
   continueAsGuest,
   clearPendingAuthFlow,
   getGuestUpgradeErrorMessage,
@@ -33,7 +48,10 @@ import {
   getGuestUpgradeSuccessMessage,
   getCurrentSession,
   getPendingAuthFlow,
+  getPendingWorkspaceInviteToken,
+  persistPendingWorkspaceInviteToken,
   readRedirectAuthError,
+  readWorkspaceInviteToken,
   sendMagicLink,
   signInWithGoogle,
   signOutSession,
@@ -49,6 +67,31 @@ const shouldUseSupabase = isSupabaseConfigured && import.meta.env.MODE !== "test
 const findTaskColumnId = (columns: Column[], taskId: string) =>
   columns.find((column) => column.cards.some((card) => card.id === taskId))?.id ?? null;
 
+const buildWorkspaceInviteLink = (rawToken: string) => {
+  if (typeof window === "undefined") {
+    return rawToken;
+  }
+
+  const inviteUrl = new URL(window.location.href);
+
+  inviteUrl.searchParams.set("invite", rawToken);
+  inviteUrl.hash = "";
+
+  return inviteUrl.toString();
+};
+
+const resolveWorkspaceLabel = (workspace: WorkspaceSummary, currentUserId: string | null) => {
+  if (workspace.personalForUserId === currentUserId) {
+    return `${workspace.name} (yours)`;
+  }
+
+  if (workspace.personalForUserId) {
+    return `${workspace.name} (shared)`;
+  }
+
+  return workspace.name;
+};
+
 const Index = () => {
   const [state, setState] = useState<AppState>("landing");
   const [boardColumns, setBoardColumns] = useState<Column[]>(
@@ -62,15 +105,52 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<AppProfile | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [workspaces, setWorkspaces] = useState<WorkspaceSummary[]>([]);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [pendingWorkspaceInvitations, setPendingWorkspaceInvitations] = useState<
+    WorkspaceInvitationSummary[]
+  >([]);
   const [isAuthLoading, setIsAuthLoading] = useState(shouldUseSupabase);
   const [isAuthActionLoading, setIsAuthActionLoading] = useState(false);
+  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(shouldUseSupabase);
   const [isBoardLoading, setIsBoardLoading] = useState(shouldUseSupabase);
+  const [hasPendingWorkspaceInvite, setHasPendingWorkspaceInvite] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [authFeedback, setAuthFeedback] = useState<string | null>(null);
   const [guestUpgradeFeedback, setGuestUpgradeFeedback] = useState<string | null>(null);
   const [guestUpgradeFeedbackTone, setGuestUpgradeFeedbackTone] = useState<
     "success" | "error" | "info" | null
   >(null);
+  const [workspaceFeedback, setWorkspaceFeedback] = useState<string | null>(null);
+  const [workspaceFeedbackTone, setWorkspaceFeedbackTone] = useState<
+    "success" | "error" | "info" | null
+  >(null);
+  const [latestInviteLink, setLatestInviteLink] = useState<string | null>(null);
+  const activeWorkspaceIdRef = useRef<string | null>(null);
+
+  const activeWorkspace = useMemo(
+    () => workspaces.find((workspace) => workspace.id === workspaceId) ?? null,
+    [workspaceId, workspaces],
+  );
+  const canManageWorkspaceInvites = useMemo(
+    () =>
+      Boolean(
+        activeWorkspace &&
+          userId &&
+          !session?.user?.is_anonymous &&
+          activeWorkspace.ownerUserId === userId,
+      ),
+    [activeWorkspace, session?.user?.is_anonymous, userId],
+  );
+  const workspaceOptions = useMemo(
+    () =>
+      workspaces.map((workspace) => ({
+        id: workspace.id,
+        label: resolveWorkspaceLabel(workspace, userId),
+      })),
+    [userId, workspaces],
+  );
+  const requiresPermanentInviteAuth = hasPendingWorkspaceInvite && (!session?.user || session.user.is_anonymous);
 
   const handleEnter = useCallback(() => {
     setState("revealing");
@@ -156,6 +236,14 @@ const Index = () => {
       setAuthFeedback(null);
       setGuestUpgradeFeedback(null);
       setGuestUpgradeFeedbackTone(null);
+      setWorkspaces([]);
+      setWorkspaceId(null);
+      setPendingWorkspaceInvitations([]);
+      setWorkspaceFeedback(null);
+      setWorkspaceFeedbackTone(null);
+      setLatestInviteLink(null);
+      setIsWorkspaceLoading(false);
+      clearStoredActiveWorkspaceId();
       clearPendingAuthFlow();
     } catch {
       setSyncError("Sign-out issue");
@@ -225,6 +313,7 @@ const Index = () => {
   const handleCreateTask = useCallback(
     (task: CreateTaskInput) => {
       const newTask = createTaskCard(task);
+      const targetWorkspaceId = activeWorkspaceIdRef.current;
       let previousColumns: Column[] | null = null;
       let nextColumns: Column[] | null = null;
 
@@ -234,15 +323,15 @@ const Index = () => {
         return nextColumns;
       });
 
-      if (!shouldUseSupabase || !userId) {
+      if (!shouldUseSupabase || !userId || !targetWorkspaceId) {
         return;
       }
 
       void (async () => {
         try {
-          await createTaskForUser(userId, newTask);
+          await createTaskForWorkspace(userId, targetWorkspaceId, newTask);
           if (nextColumns) {
-            await syncTaskOrderForUser(userId, nextColumns, ["todo"]);
+            await syncTaskOrderForWorkspace(targetWorkspaceId, nextColumns, ["todo"]);
           }
           setSyncError(null);
         } catch {
@@ -271,14 +360,14 @@ const Index = () => {
         return nextColumns;
       });
 
-      if (!changed || !shouldUseSupabase || !userId) {
+      if (!changed || !shouldUseSupabase || !workspaceId) {
         return;
       }
 
       void (async () => {
         try {
           if (nextColumns && sourceColumnId) {
-            await syncTaskOrderForUser(userId, nextColumns, [
+            await syncTaskOrderForWorkspace(workspaceId, nextColumns, [
               sourceColumnId,
               taskMove.targetColumnId,
             ]);
@@ -292,7 +381,7 @@ const Index = () => {
         }
       })();
     },
-    [userId],
+    [workspaceId],
   );
 
   const handleUpdateTask = useCallback(
@@ -308,14 +397,17 @@ const Index = () => {
         return nextColumns;
       });
 
-      if (!shouldUseSupabase || !userId) {
+      if (!shouldUseSupabase || !workspaceId) {
         return true;
       }
 
       try {
-        await updateTaskForUser(userId, taskUpdate);
+        await updateTaskForWorkspace(workspaceId, taskUpdate);
         if (nextColumns && previousStatus && previousStatus !== taskUpdate.status) {
-          await syncTaskOrderForUser(userId, nextColumns, [previousStatus, taskUpdate.status]);
+          await syncTaskOrderForWorkspace(workspaceId, nextColumns, [
+            previousStatus,
+            taskUpdate.status,
+          ]);
         }
         setSyncError(null);
         return true;
@@ -327,7 +419,7 @@ const Index = () => {
         return false;
       }
     },
-    [userId],
+    [workspaceId],
   );
 
   const handleDeleteTask = useCallback(
@@ -343,14 +435,14 @@ const Index = () => {
         return nextColumns;
       });
 
-      if (!shouldUseSupabase || !userId) {
+      if (!shouldUseSupabase || !workspaceId) {
         return true;
       }
 
       try {
-        await deleteTaskForUser(userId, taskId);
+        await deleteTaskForWorkspace(workspaceId, taskId);
         if (nextColumns && sourceColumnId) {
-          await syncTaskOrderForUser(userId, nextColumns, [sourceColumnId]);
+          await syncTaskOrderForWorkspace(workspaceId, nextColumns, [sourceColumnId]);
         }
         setSyncError(null);
         return true;
@@ -362,7 +454,7 @@ const Index = () => {
         return false;
       }
     },
-    [userId],
+    [workspaceId],
   );
 
   const handleCreateTeamMember = useCallback(
@@ -375,12 +467,12 @@ const Index = () => {
         return [...currentMembers, newMember];
       });
 
-      if (!shouldUseSupabase || !userId) {
+      if (!shouldUseSupabase || !userId || !workspaceId) {
         return true;
       }
 
       try {
-        await createTeamMemberForUser(userId, newMember);
+        await createTeamMemberForWorkspace(userId, workspaceId, newMember);
         setSyncError(null);
         return true;
       } catch {
@@ -391,8 +483,89 @@ const Index = () => {
         return false;
       }
     },
-    [userId],
+    [userId, workspaceId],
   );
+
+  const refreshPendingInvitations = useCallback(
+    async (targetWorkspaceId: string) => {
+      if (!canManageWorkspaceInvites) {
+        setPendingWorkspaceInvitations([]);
+        return;
+      }
+
+      const nextInvitations = await fetchWorkspaceInvitationsForOwner(targetWorkspaceId);
+      setPendingWorkspaceInvitations(nextInvitations);
+    },
+    [canManageWorkspaceInvites],
+  );
+
+  const handleSelectWorkspace = useCallback(
+    (nextWorkspaceId: string) => {
+      activeWorkspaceIdRef.current = nextWorkspaceId;
+      setWorkspaceId(nextWorkspaceId);
+      storeActiveWorkspaceId(nextWorkspaceId);
+      setLatestInviteLink(null);
+      setWorkspaceFeedback(null);
+      setWorkspaceFeedbackTone(null);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    activeWorkspaceIdRef.current = workspaceId;
+  }, [workspaceId]);
+
+  const handleCreateWorkspaceInvitation = useCallback(
+    async (email: string) => {
+      if (!workspaceId) {
+        return null;
+      }
+
+      try {
+        const invitation = await createWorkspaceInvitation(workspaceId, email);
+        const inviteLink = buildWorkspaceInviteLink(invitation.rawToken);
+
+        setLatestInviteLink(inviteLink);
+        setWorkspaceFeedback(`Invite ready for ${invitation.invitedEmail}`);
+        setWorkspaceFeedbackTone("success");
+        await refreshPendingInvitations(workspaceId);
+        return inviteLink;
+      } catch (error) {
+        setWorkspaceFeedback(getWorkspaceInvitationErrorMessage(error));
+        setWorkspaceFeedbackTone("error");
+        return null;
+      }
+    },
+    [refreshPendingInvitations, workspaceId],
+  );
+
+  const handleRevokeWorkspaceInvitation = useCallback(
+    async (invitationId: string) => {
+      if (!workspaceId) {
+        return;
+      }
+
+      try {
+        await revokeWorkspaceInvitation(invitationId);
+        setWorkspaceFeedback("Invite revoked");
+        setWorkspaceFeedbackTone("info");
+        await refreshPendingInvitations(workspaceId);
+      } catch (error) {
+        setWorkspaceFeedback(getWorkspaceInvitationErrorMessage(error));
+        setWorkspaceFeedbackTone("error");
+      }
+    },
+    [refreshPendingInvitations, workspaceId],
+  );
+
+  const loadBoardSnapshot = useCallback(async (targetWorkspaceId: string) => {
+    const [columns, members] = await Promise.all([
+      fetchBoardColumnsForWorkspace(targetWorkspaceId),
+      fetchTeamMembersForWorkspace(targetWorkspaceId),
+    ]);
+
+    return { columns, members };
+  }, []);
 
   useEffect(() => {
     if (!shouldUseSupabase || !supabase) {
@@ -407,14 +580,20 @@ const Index = () => {
       }
 
       const pendingFlow = getPendingAuthFlow();
+      const pendingWorkspaceInviteToken = getPendingWorkspaceInviteToken();
 
       setSession(nextSession);
       setUserId(nextSession?.user.id ?? null);
 
       if (!nextSession?.user || nextSession.user.is_anonymous) {
         setProfile(null);
+        if (pendingWorkspaceInviteToken) {
+          setHasPendingWorkspaceInvite(true);
+          setAuthFeedback("Sign in with Google or a magic link to accept this invite");
+          setState("landing");
+        }
 
-        if (pendingFlow?.returnToBoard) {
+        if (pendingFlow?.returnToBoard && !pendingWorkspaceInviteToken) {
           setState("board");
         }
 
@@ -424,7 +603,9 @@ const Index = () => {
         }
 
         if (!nextSession?.user) {
-          setAuthFeedback(null);
+          if (!pendingWorkspaceInviteToken) {
+            setAuthFeedback(null);
+          }
           setGuestUpgradeFeedback(null);
           setGuestUpgradeFeedbackTone(null);
         }
@@ -450,7 +631,9 @@ const Index = () => {
           setGuestUpgradeFeedbackTone(null);
           clearPendingAuthFlow();
         } else {
-          setAuthFeedback(null);
+          if (!getPendingWorkspaceInviteToken()) {
+            setAuthFeedback(null);
+          }
           setGuestUpgradeFeedback(null);
           setGuestUpgradeFeedbackTone(null);
         }
@@ -474,6 +657,17 @@ const Index = () => {
 
     void (async () => {
       try {
+        const inviteTokenFromUrl = readWorkspaceInviteToken();
+
+        if (inviteTokenFromUrl) {
+          persistPendingWorkspaceInviteToken(inviteTokenFromUrl);
+          setHasPendingWorkspaceInvite(true);
+          setAuthFeedback("Sign in with Google or a magic link to accept this invite");
+          setState("landing");
+        } else if (getPendingWorkspaceInviteToken()) {
+          setHasPendingWorkspaceInvite(true);
+        }
+
         const redirectError = readRedirectAuthError();
         const pendingFlow = getPendingAuthFlow();
 
@@ -519,6 +713,170 @@ const Index = () => {
 
     if (!userId) {
       if (!isAuthLoading) {
+        setWorkspaces([]);
+        setWorkspaceId(null);
+        setIsWorkspaceLoading(false);
+      }
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadWorkspace = async () => {
+      setIsWorkspaceLoading(true);
+
+      try {
+        const personalWorkspace = await ensurePersonalWorkspaceForCurrentUser();
+        const pendingInviteToken = getPendingWorkspaceInviteToken();
+        const canRedeemPendingInvite = Boolean(
+          pendingInviteToken && session?.user && !session.user.is_anonymous,
+        );
+        let acceptedWorkspaceId: string | null = null;
+        let acceptedWorkspaceName: string | null = null;
+        let nextWorkspaces: WorkspaceSummary[] | null = null;
+
+        if (canRedeemPendingInvite && pendingInviteToken) {
+          const currentWorkspaces = await fetchWorkspacesForCurrentUser();
+          const currentWorkspaceIds = new Set(currentWorkspaces.map((workspace) => workspace.id));
+
+          try {
+            const acceptedInvite = await acceptWorkspaceInvitation(pendingInviteToken);
+            nextWorkspaces = await fetchWorkspacesForCurrentUser();
+            const acceptedWorkspace =
+              (acceptedInvite?.workspaceId
+                ? nextWorkspaces.find((workspace) => workspace.id === acceptedInvite.workspaceId) ?? null
+                : null) ??
+              nextWorkspaces.find((workspace) => !currentWorkspaceIds.has(workspace.id)) ??
+              null;
+
+            if (acceptedWorkspace) {
+              acceptedWorkspaceId = acceptedWorkspace.id;
+              acceptedWorkspaceName = acceptedInvite?.workspaceName ?? acceptedWorkspace.name;
+              clearPendingWorkspaceInviteToken();
+              setHasPendingWorkspaceInvite(false);
+              setAuthFeedback(`Joined ${acceptedWorkspaceName}`);
+              setWorkspaceFeedback(null);
+              setWorkspaceFeedbackTone(null);
+              setState("board");
+            } else if (!acceptedInvite) {
+              setAuthFeedback("Workspace invite unavailable");
+            }
+          } catch (error) {
+            const inviteMessage = getWorkspaceInvitationErrorMessage(error);
+
+            setAuthFeedback(inviteMessage);
+
+            if (inviteMessage !== "Workspace invite unavailable") {
+              clearPendingWorkspaceInviteToken();
+              setHasPendingWorkspaceInvite(false);
+            }
+          }
+        }
+
+        const resolvedWorkspaces = nextWorkspaces ?? (await fetchWorkspacesForCurrentUser());
+        const storedWorkspaceId = getStoredActiveWorkspaceId();
+        const personalWorkspaceId =
+          resolvedWorkspaces.find((workspace) => workspace.id === personalWorkspace.id)?.id ??
+          personalWorkspace.id;
+        const nextWorkspaceId =
+          (acceptedWorkspaceId &&
+            resolvedWorkspaces.some((workspace) => workspace.id === acceptedWorkspaceId)
+              ? acceptedWorkspaceId
+              : null) ??
+          (storedWorkspaceId &&
+          resolvedWorkspaces.some((workspace) => workspace.id === storedWorkspaceId)
+            ? storedWorkspaceId
+            : null) ??
+          (resolvedWorkspaces.some((workspace) => workspace.id === personalWorkspaceId)
+            ? personalWorkspaceId
+            : resolvedWorkspaces[0]?.id ?? null);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setWorkspaces(resolvedWorkspaces);
+        activeWorkspaceIdRef.current = nextWorkspaceId;
+        setWorkspaceId(nextWorkspaceId);
+        if (nextWorkspaceId) {
+          storeActiveWorkspaceId(nextWorkspaceId);
+        } else {
+          clearStoredActiveWorkspaceId();
+        }
+        setSyncError(null);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setWorkspaces([]);
+        setWorkspaceId(null);
+        setSyncError("Workspace unavailable");
+      } finally {
+        if (isMounted) {
+          setIsWorkspaceLoading(false);
+        }
+      }
+    };
+
+    void loadWorkspace();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthLoading, session?.user, userId]);
+
+  useEffect(() => {
+    if (!shouldUseSupabase) {
+      return;
+    }
+
+    if (!workspaceId || !canManageWorkspaceInvites) {
+      setPendingWorkspaceInvitations([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    void (async () => {
+      try {
+        const nextInvitations = await fetchWorkspaceInvitationsForOwner(workspaceId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setPendingWorkspaceInvitations(nextInvitations);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setPendingWorkspaceInvitations([]);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [canManageWorkspaceInvites, workspaceId]);
+
+  useEffect(() => {
+    if (!shouldUseSupabase) {
+      return;
+    }
+
+    if (!userId) {
+      if (!isAuthLoading && !isWorkspaceLoading) {
+        setBoardColumns(createEmptyBoardColumns());
+        setTeamMembers([]);
+        setIsBoardLoading(false);
+      }
+      return;
+    }
+
+    if (!workspaceId) {
+      if (!isAuthLoading && !isWorkspaceLoading) {
         setBoardColumns(createEmptyBoardColumns());
         setTeamMembers([]);
         setIsBoardLoading(false);
@@ -532,10 +890,7 @@ const Index = () => {
       setIsBoardLoading(true);
 
       try {
-        const [columns, members] = await Promise.all([
-          fetchBoardColumnsForUser(userId),
-          fetchTeamMembersForUser(userId),
-        ]);
+        const { columns, members } = await loadBoardSnapshot(workspaceId);
 
         if (!isMounted) {
           return;
@@ -564,7 +919,84 @@ const Index = () => {
     return () => {
       isMounted = false;
     };
-  }, [isAuthLoading, userId]);
+  }, [isAuthLoading, isWorkspaceLoading, loadBoardSnapshot, userId, workspaceId]);
+
+  useEffect(() => {
+    if (!shouldUseSupabase || !supabase || !userId || !workspaceId) {
+      return;
+    }
+
+    let isMounted = true;
+    let isRefreshing = false;
+    let shouldRefreshAgain = false;
+
+    const refreshBoard = async () => {
+      if (isRefreshing) {
+        shouldRefreshAgain = true;
+        return;
+      }
+
+      isRefreshing = true;
+
+      try {
+        const { columns, members } = await loadBoardSnapshot(workspaceId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setTeamMembers(members);
+        setBoardColumns(attachAssigneesToColumns(columns, members));
+        setSyncError(null);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setSyncError("Sync unavailable");
+      } finally {
+        isRefreshing = false;
+
+        if (shouldRefreshAgain) {
+          shouldRefreshAgain = false;
+          void refreshBoard();
+        }
+      }
+    };
+
+    const channel = supabase
+      .channel(`workspace-board:${workspaceId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "tasks",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        () => {
+          void refreshBoard();
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "team_members",
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        () => {
+          void refreshBoard();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [loadBoardSnapshot, userId, workspaceId]);
 
   const boardStatusText = useMemo(() => {
     if (!shouldUseSupabase) {
@@ -575,7 +1007,7 @@ const Index = () => {
       return "Sync issue";
     }
 
-    if (isAuthLoading || isBoardLoading) {
+    if (isAuthLoading || isWorkspaceLoading || isBoardLoading) {
       return "Syncing";
     }
 
@@ -584,7 +1016,7 @@ const Index = () => {
     }
 
     return null;
-  }, [authFeedback, isAuthLoading, isBoardLoading, session?.user, syncError]);
+  }, [authFeedback, isAuthLoading, isBoardLoading, isWorkspaceLoading, session?.user, syncError]);
 
   const boardStatusTone = useMemo(() => {
     if (!shouldUseSupabase) {
@@ -595,7 +1027,7 @@ const Index = () => {
       return "error" as const;
     }
 
-    if (isAuthLoading || isBoardLoading) {
+    if (isAuthLoading || isWorkspaceLoading || isBoardLoading) {
       return "loading" as const;
     }
 
@@ -604,7 +1036,7 @@ const Index = () => {
     }
 
     return null;
-  }, [authFeedback, isAuthLoading, isBoardLoading, session?.user, syncError]);
+  }, [authFeedback, isAuthLoading, isBoardLoading, isWorkspaceLoading, session?.user, syncError]);
 
   const accountLabel = useMemo(() => {
     if (session?.user?.is_anonymous) {
@@ -650,9 +1082,22 @@ const Index = () => {
           isUpgradeBusy={isAuthActionLoading}
           onUpgradeGuestWithGoogle={handleUpgradeGuestWithGoogle}
           onUpgradeGuestWithEmail={handleUpgradeGuestWithEmail}
+          activeWorkspaceId={workspaceId}
+          workspaces={workspaceOptions}
+          workspaceFeedback={workspaceFeedback}
+          workspaceFeedbackTone={workspaceFeedbackTone}
+          latestInviteLink={latestInviteLink}
+          pendingWorkspaceInvitations={pendingWorkspaceInvitations.map((invitation) => ({
+            id: invitation.id,
+            invitedEmail: invitation.invitedEmail,
+          }))}
+          canManageWorkspaceInvites={canManageWorkspaceInvites}
+          onSelectWorkspace={handleSelectWorkspace}
+          onCreateWorkspaceInvitation={handleCreateWorkspaceInvitation}
+          onRevokeWorkspaceInvitation={handleRevokeWorkspaceInvitation}
           onSignOut={handleSignOut}
-          canCreateTask={!shouldUseSupabase || !!userId}
-          isBoardLoading={isAuthLoading || isBoardLoading}
+          canCreateTask={!shouldUseSupabase || (!!userId && !!workspaceId)}
+          isBoardLoading={isAuthLoading || isWorkspaceLoading || isBoardLoading}
         />
       </div>
 
@@ -681,6 +1126,7 @@ const Index = () => {
             canUseSupabase={shouldUseSupabase}
             hasSession={!!session}
             isGuestSession={session?.user?.is_anonymous ?? false}
+            requiresPermanentAccount={requiresPermanentInviteAuth}
             accountLabel={accountLabel}
             authFeedback={authFeedback}
             isAuthBusy={isAuthLoading || isAuthActionLoading}

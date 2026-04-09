@@ -2,6 +2,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./client";
 
 const AUTH_PENDING_FLOW_STORAGE_KEY = "kanban.pending-auth-flow";
+const WORKSPACE_INVITE_TOKEN_STORAGE_KEY = "kanban.pending-workspace-invite-token";
 const PENDING_FLOW_MAX_AGE_MS = 1000 * 60 * 60 * 24;
 
 export type PendingAuthFlowKind = "guest-upgrade-google" | "guest-upgrade-email";
@@ -81,6 +82,32 @@ export const clearPendingAuthFlow = () => {
   window.sessionStorage.removeItem(AUTH_PENDING_FLOW_STORAGE_KEY);
 };
 
+export const persistPendingWorkspaceInviteToken = (rawToken: string) => {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  window.sessionStorage.setItem(WORKSPACE_INVITE_TOKEN_STORAGE_KEY, rawToken);
+};
+
+export const getPendingWorkspaceInviteToken = () => {
+  if (!canUseSessionStorage()) {
+    return null;
+  }
+
+  const value = window.sessionStorage.getItem(WORKSPACE_INVITE_TOKEN_STORAGE_KEY);
+
+  return value && value.trim() ? value : null;
+};
+
+export const clearPendingWorkspaceInviteToken = () => {
+  if (!canUseSessionStorage()) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(WORKSPACE_INVITE_TOKEN_STORAGE_KEY);
+};
+
 const parseRedirectParams = () => {
   if (typeof window === "undefined") {
     return new URLSearchParams();
@@ -130,6 +157,24 @@ export const readRedirectAuthError = (): RedirectAuthError | null => {
     description,
     error,
   };
+};
+
+export const readWorkspaceInviteToken = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("invite");
+
+  if (!token) {
+    return null;
+  }
+
+  url.searchParams.delete("invite");
+  window.history.replaceState(window.history.state, "", url.toString());
+
+  return token;
 };
 
 const resolveAuthErrorCode = (error: unknown) => {

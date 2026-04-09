@@ -27,6 +27,10 @@ import type {
   TeamMember,
   UpdateTaskInput,
 } from "@/features/board/types";
+import type {
+  AccountWorkspaceInvitation,
+  AccountWorkspaceOption,
+} from "./AccountMenu";
 import BoardColumn from "./BoardColumn";
 import AccountMenu from "./AccountMenu";
 import CreateTaskDialog from "./CreateTaskDialog";
@@ -56,6 +60,16 @@ interface BoardSceneProps {
   isUpgradeBusy?: boolean;
   onUpgradeGuestWithGoogle?: () => Promise<void> | void;
   onUpgradeGuestWithEmail?: (email: string) => Promise<boolean>;
+  activeWorkspaceId?: string | null;
+  workspaces?: AccountWorkspaceOption[];
+  workspaceFeedback?: string | null;
+  workspaceFeedbackTone?: "success" | "error" | "info" | null;
+  latestInviteLink?: string | null;
+  pendingWorkspaceInvitations?: AccountWorkspaceInvitation[];
+  canManageWorkspaceInvites?: boolean;
+  onSelectWorkspace?: (workspaceId: string) => void;
+  onCreateWorkspaceInvitation?: (email: string) => Promise<string | null>;
+  onRevokeWorkspaceInvitation?: (invitationId: string) => Promise<void> | void;
   onSignOut: () => Promise<void> | void;
   canCreateTask?: boolean;
   isBoardLoading?: boolean;
@@ -81,6 +95,16 @@ const BoardScene = ({
   isUpgradeBusy = false,
   onUpgradeGuestWithGoogle,
   onUpgradeGuestWithEmail,
+  activeWorkspaceId = null,
+  workspaces = [],
+  workspaceFeedback = null,
+  workspaceFeedbackTone = null,
+  latestInviteLink = null,
+  pendingWorkspaceInvitations = [],
+  canManageWorkspaceInvites = false,
+  onSelectWorkspace,
+  onCreateWorkspaceInvitation,
+  onRevokeWorkspaceInvitation,
   onSignOut,
   canCreateTask = true,
   isBoardLoading = false,
@@ -272,6 +296,16 @@ const BoardScene = ({
                 isUpgradeBusy={isUpgradeBusy}
                 onUpgradeWithGoogle={onUpgradeGuestWithGoogle}
                 onUpgradeWithEmail={onUpgradeGuestWithEmail}
+                activeWorkspaceId={activeWorkspaceId}
+                workspaces={workspaces}
+                workspaceFeedback={workspaceFeedback}
+                workspaceFeedbackTone={workspaceFeedbackTone}
+                latestInviteLink={latestInviteLink}
+                pendingInvitations={pendingWorkspaceInvitations}
+                canManageWorkspaceInvites={canManageWorkspaceInvites}
+                onSelectWorkspace={onSelectWorkspace}
+                onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
+                onRevokeWorkspaceInvitation={onRevokeWorkspaceInvitation}
                 onSignOut={onSignOut}
               />
             )}

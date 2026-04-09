@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  clearPendingWorkspaceInviteToken,
   clearPendingAuthFlow,
+  getPendingWorkspaceInviteToken,
   getGuestUpgradeErrorMessage,
   getGuestUpgradePendingMessage,
   getGuestUpgradeSuccessMessage,
   getPendingAuthFlow,
+  persistPendingWorkspaceInviteToken,
+  readWorkspaceInviteToken,
   readRedirectAuthError,
   type PendingAuthFlow,
 } from "./auth";
@@ -94,5 +98,18 @@ describe("auth upgrade helpers", () => {
     clearPendingAuthFlow();
 
     expect(getPendingAuthFlow()).toBeNull();
+  });
+
+  it("reads workspace invite token from the url and stores it separately", () => {
+    window.history.replaceState(window.history.state, "", "/?invite=test-token");
+
+    expect(readWorkspaceInviteToken()).toBe("test-token");
+    expect(window.location.search).toBe("");
+
+    persistPendingWorkspaceInviteToken("stored-token");
+    expect(getPendingWorkspaceInviteToken()).toBe("stored-token");
+
+    clearPendingWorkspaceInviteToken();
+    expect(getPendingWorkspaceInviteToken()).toBeNull();
   });
 });

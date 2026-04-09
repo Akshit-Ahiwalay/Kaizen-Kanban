@@ -1,16 +1,38 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
+type FeedbackTone = "success" | "error" | "info" | null;
+
+export interface AccountWorkspaceOption {
+  id: string;
+  label: string;
+}
+
+export interface AccountWorkspaceInvitation {
+  id: string;
+  invitedEmail: string;
+}
+
 interface AccountMenuProps {
   label: string;
   detail?: string | null;
   avatarUrl?: string | null;
   isGuest?: boolean;
   guestUpgradeFeedback?: string | null;
-  guestUpgradeFeedbackTone?: "success" | "error" | "info" | null;
+  guestUpgradeFeedbackTone?: FeedbackTone;
   isUpgradeBusy?: boolean;
   onUpgradeWithGoogle?: () => Promise<void> | void;
   onUpgradeWithEmail?: (email: string) => Promise<boolean>;
+  activeWorkspaceId?: string | null;
+  workspaces?: AccountWorkspaceOption[];
+  workspaceFeedback?: string | null;
+  workspaceFeedbackTone?: FeedbackTone;
+  latestInviteLink?: string | null;
+  pendingInvitations?: AccountWorkspaceInvitation[];
+  canManageWorkspaceInvites?: boolean;
+  onSelectWorkspace?: (workspaceId: string) => void;
+  onCreateWorkspaceInvitation?: (email: string) => Promise<string | null>;
+  onRevokeWorkspaceInvitation?: (invitationId: string) => Promise<void> | void;
   onSignOut: () => Promise<void> | void;
 }
 
@@ -32,6 +54,16 @@ const AccountMenu = ({
   isUpgradeBusy = false,
   onUpgradeWithGoogle,
   onUpgradeWithEmail,
+  activeWorkspaceId = null,
+  workspaces = [],
+  workspaceFeedback = null,
+  workspaceFeedbackTone = null,
+  latestInviteLink = null,
+  pendingInvitations = [],
+  canManageWorkspaceInvites = false,
+  onSelectWorkspace,
+  onCreateWorkspaceInvitation,
+  onRevokeWorkspaceInvitation,
   onSignOut,
 }: AccountMenuProps) => {
   const [open, setOpen] = useState(false);
@@ -40,6 +72,11 @@ const AccountMenu = ({
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
+  const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
+  const [copiedInviteLink, setCopiedInviteLink] = useState(false);
+  const [isRevokingInviteId, setIsRevokingInviteId] = useState<string | null>(null);
   const [mobileMenuPosition, setMobileMenuPosition] = useState<{
     left: number;
     top: number;
@@ -52,11 +89,19 @@ const AccountMenu = ({
   const toneLabel = isGuest ? "Guest" : "Account";
   const canShowAvatar = Boolean(avatarUrl) && !imageFailed;
   const statusMessage = emailError || guestUpgradeFeedback;
+  const workspaceStatusMessage = inviteError || workspaceFeedback;
   const statusClassName = emailError
     ? "text-seal/72"
     : guestUpgradeFeedbackTone === "success"
       ? "text-olive/70"
       : guestUpgradeFeedbackTone === "error"
+        ? "text-seal/72"
+        : "text-muted-foreground/54";
+  const workspaceStatusClassName = inviteError
+    ? "text-seal/72"
+    : workspaceFeedbackTone === "success"
+      ? "text-olive/70"
+      : workspaceFeedbackTone === "error"
         ? "text-seal/72"
         : "text-muted-foreground/54";
 
@@ -71,6 +116,20 @@ const AccountMenu = ({
 
     setEmailError("");
   }, [guestUpgradeFeedback]);
+
+  useEffect(() => {
+    if (!workspaceFeedback) {
+      return;
+    }
+
+    setInviteError("");
+  }, [workspaceFeedback]);
+
+  useEffect(() => {
+    if (!latestInviteLink) {
+      setCopiedInviteLink(false);
+    }
+  }, [latestInviteLink]);
 
   useEffect(() => {
     if (!open) {
@@ -176,6 +235,46 @@ const AccountMenu = ({
     }
   };
 
+  const handleCreateInvite = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!onCreateWorkspaceInvitation) {
+      return;
+    }
+
+    const trimmedEmail = inviteEmail.trim();
+
+    if (!trimmedEmail) {
+      setInviteError("Email is required.");
+      return;
+    }
+
+    setInviteError("");
+    setCopiedInviteLink(false);
+    setIsInviteSubmitting(true);
+
+    try {
+      const createdLink = await onCreateWorkspaceInvitation(trimmedEmail);
+
+      if (!createdLink) {
+        return;
+      }
+
+      setInviteEmail("");
+    } finally {
+      setIsInviteSubmitting(false);
+    }
+  };
+
+  const handleCopyInviteLink = async () => {
+    if (!latestInviteLink || typeof navigator === "undefined" || !navigator.clipboard) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(latestInviteLink);
+    setCopiedInviteLink(true);
+  };
+
   return (
     <div className="relative max-w-full" ref={containerRef}>
       <button
@@ -235,6 +334,126 @@ const AccountMenu = ({
             )}
           </div>
 
+          {!isGuest && workspaces.length > 0 && (
+            <div className="mb-3 border-b border-border/18 pb-3">
+              <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50">
+                Workspace
+              </p>
+
+              <label className="mt-2.5 block">
+                <span className="sr-only">Select workspace</span>
+                <select
+                  aria-label="Select workspace"
+                  value={activeWorkspaceId ?? ""}
+                  onChange={(event) => onSelectWorkspace?.(event.target.value)}
+                  className="w-full border border-border/24 bg-background/68 px-3 py-2.5 font-body text-[12px] uppercase tracking-[0.1em] text-foreground/76 outline-none transition-colors duration-300 hover:border-border/36"
+                >
+                  {workspaces.map((workspace) => (
+                    <option key={workspace.id} value={workspace.id}>
+                      {workspace.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+
+          {!isGuest && canManageWorkspaceInvites && (
+            <div className="mb-3 border-b border-border/18 pb-3">
+              <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50">
+                Invite
+              </p>
+              <p className="mt-1.5 font-body text-[12px] leading-relaxed text-muted-foreground/62">
+                Generate a link for a specific email address.
+              </p>
+
+              <form className="mt-2.5 flex flex-col gap-2.5" onSubmit={handleCreateInvite}>
+                <Input
+                  aria-label="Invite collaborator email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(event) => {
+                    setInviteEmail(event.target.value);
+                    if (inviteError) {
+                      setInviteError("");
+                    }
+                  }}
+                  placeholder="Collaborator email"
+                  className="border-border/24 bg-background/68 text-[12px] text-foreground/76 placeholder:text-muted-foreground/36"
+                  disabled={isInviteSubmitting}
+                />
+                <button
+                  type="submit"
+                  className="w-full border border-border/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/40 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+                  disabled={isInviteSubmitting || !onCreateWorkspaceInvitation}
+                >
+                  {isInviteSubmitting ? "Creating..." : "Create Invite Link"}
+                </button>
+              </form>
+
+              {latestInviteLink && (
+                <div className="mt-2.5 space-y-2">
+                  <Input
+                    aria-label="Latest invite link"
+                    value={latestInviteLink}
+                    readOnly
+                    className="border-border/24 bg-background/68 text-[12px] text-foreground/70"
+                  />
+                  <button
+                    type="button"
+                    className="w-full border border-border/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/40 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+                    onClick={() => void handleCopyInviteLink()}
+                  >
+                    {copiedInviteLink ? "Copied" : "Copy Link"}
+                  </button>
+                </div>
+              )}
+
+              {pendingInvitations.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {pendingInvitations.map((invitation) => (
+                    <div
+                      key={invitation.id}
+                      className="flex items-center justify-between gap-3 border border-border/16 px-3 py-2"
+                    >
+                      <span className="min-w-0 truncate font-body text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60">
+                        {invitation.invitedEmail}
+                      </span>
+                      <button
+                        type="button"
+                        className="shrink-0 text-[10px] font-body uppercase tracking-[0.14em] text-seal/68 transition-colors duration-300 hover:text-seal/82 disabled:cursor-not-allowed disabled:text-muted-foreground/34"
+                        disabled={isRevokingInviteId === invitation.id}
+                        onClick={async () => {
+                          if (!onRevokeWorkspaceInvitation) {
+                            return;
+                          }
+
+                          setIsRevokingInviteId(invitation.id);
+
+                          try {
+                            await onRevokeWorkspaceInvitation(invitation.id);
+                          } finally {
+                            setIsRevokingInviteId(null);
+                          }
+                        }}
+                      >
+                        {isRevokingInviteId === invitation.id ? "Revoking..." : "Revoke"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {workspaceStatusMessage && (
+                <p
+                  className={`mt-2.5 font-body text-[11px] uppercase tracking-[0.12em] ${workspaceStatusClassName}`}
+                >
+                  {workspaceStatusMessage}
+                </p>
+              )}
+            </div>
+          )}
+
           {isGuest && (
             <div className="mb-3 border-b border-border/18 pb-3">
               <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50">
@@ -288,7 +507,7 @@ const AccountMenu = ({
           <button
             type="button"
             className="w-full border border-border/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/40 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
-            disabled={isSigningOut || isUpgradeBusy || isEmailSubmitting}
+            disabled={isSigningOut || isUpgradeBusy || isEmailSubmitting || isInviteSubmitting}
             onClick={async () => {
               setIsSigningOut(true);
 

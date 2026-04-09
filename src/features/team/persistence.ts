@@ -4,22 +4,27 @@ import type { Database } from "@/integrations/supabase/types";
 
 type TeamMemberInsert = Database["public"]["Tables"]["team_members"]["Insert"];
 
-const buildTeamMemberInsert = (userId: string, member: TeamMember): TeamMemberInsert => ({
+const buildTeamMemberInsert = (
+  userId: string,
+  workspaceId: string,
+  member: TeamMember,
+): TeamMemberInsert => ({
   id: member.id,
+  workspace_id: workspaceId,
   user_id: userId,
   name: member.name,
   color: member.color,
 });
 
-export const fetchTeamMembersForUser = async (userId: string): Promise<TeamMember[]> => {
+export const fetchTeamMembersForWorkspace = async (workspaceId: string): Promise<TeamMember[]> => {
   if (!supabase) {
     return [];
   }
 
   const { data, error } = await supabase
     .from("team_members")
-    .select("id, user_id, name, color, created_at")
-    .eq("user_id", userId)
+    .select("id, workspace_id, user_id, name, color, created_at")
+    .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -33,14 +38,18 @@ export const fetchTeamMembersForUser = async (userId: string): Promise<TeamMembe
   }));
 };
 
-export const createTeamMemberForUser = async (userId: string, member: TeamMember) => {
+export const createTeamMemberForWorkspace = async (
+  userId: string,
+  workspaceId: string,
+  member: TeamMember,
+) => {
   if (!supabase) {
     return;
   }
 
   const { error } = await supabase
     .from("team_members")
-    .insert(buildTeamMemberInsert(userId, member));
+    .insert(buildTeamMemberInsert(userId, workspaceId, member));
 
   if (error) {
     throw error;
