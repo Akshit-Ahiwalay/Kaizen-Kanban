@@ -272,6 +272,20 @@ export const leaveSharedWorkspace = async (workspaceId: string) => {
   }
 };
 
+export const deleteSharedWorkspace = async (workspaceId: string) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("delete_shared_workspace", {
+    p_workspace_id: workspaceId,
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+
 const canUseLocalStorage = () =>
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
@@ -350,6 +364,10 @@ export const getWorkspaceErrorMessage = (error: unknown) => {
       return "Workspace unavailable";
     case "workspace_forbidden":
       return "You no longer have access to this workspace";
+    case "workspace_delete_forbidden":
+      return "Only the workspace owner can delete this workspace";
+    case "workspace_delete_personal_workspace_forbidden":
+      return "Personal workspaces cannot be deleted";
     case "workspace_member_not_found":
       return "Member unavailable";
     case "workspace_members_personal_workspace_forbidden":

@@ -31,6 +31,7 @@ import {
   clearStoredActiveWorkspaceId,
   createSharedWorkspace,
   createWorkspaceInvitation,
+  deleteSharedWorkspace,
   fetchWorkspaceMembers,
   fetchWorkspaceInvitationsForOwner,
   fetchWorkspacesForCurrentUser,
@@ -88,6 +89,14 @@ const buildWorkspaceInviteLink = (rawToken: string) => {
 
 const isSharedWorkspace = (workspace: WorkspaceSummary | null) =>
   Boolean(workspace && !workspace.personalForUserId);
+
+const getPreferredFallbackWorkspaceId = (
+  workspaces: WorkspaceSummary[],
+  currentUserId: string | null,
+) =>
+  workspaces.find((workspace) => workspace.personalForUserId === currentUserId)?.id ??
+  workspaces[0]?.id ??
+  null;
 
 const buildWorkspaceGroups = (workspaces: WorkspaceSummary[], currentUserId: string | null) => {
   const personal = workspaces
@@ -181,6 +190,7 @@ const Index = () => {
     [activeWorkspace, session?.user?.is_anonymous, userId],
   );
   const canManageWorkspaceMembers = canManageWorkspaceInvites;
+  const canDeleteSharedWorkspace = canManageWorkspaceInvites;
   const workspaceGroups = useMemo(() => buildWorkspaceGroups(workspaces, userId), [userId, workspaces]);
   const activeWorkspaceOption = useMemo(
     () =>
@@ -672,10 +682,7 @@ const Index = () => {
       await leaveSharedWorkspace(workspaceId);
 
       const remainingWorkspaces = workspaces.filter((workspace) => workspace.id !== workspaceId);
-      const nextWorkspaceId =
-        remainingWorkspaces.find((workspace) => workspace.personalForUserId === userId)?.id ??
-        remainingWorkspaces[0]?.id ??
-        null;
+      const nextWorkspaceId = getPreferredFallbackWorkspaceId(remainingWorkspaces, userId);
 
       setWorkspaces(remainingWorkspaces);
       activeWorkspaceIdRef.current = nextWorkspaceId;
@@ -684,6 +691,51 @@ const Index = () => {
       setPendingWorkspaceInvitations([]);
       setLatestInviteLink(null);
       setWorkspaceFeedback(`Left ${departingWorkspaceName}`);
+      setWorkspaceFeedbackTone("info");
+
+      if (nextWorkspaceId) {
+        storeActiveWorkspaceId(nextWorkspaceId);
+      } else {
+        clearStoredActiveWorkspaceId();
+      }
+
+      void fetchWorkspacesForCurrentUser()
+        .then((nextWorkspaces) => {
+          setWorkspaces(nextWorkspaces);
+        })
+        .catch(() => {
+          // Preserve the local fallback workspace selection if the refresh fails.
+        });
+    } catch (error) {
+      setWorkspaceFeedback(getWorkspaceErrorMessage(error));
+      setWorkspaceFeedbackTone("error");
+    } finally {
+      setIsWorkspaceActionLoading(false);
+    }
+  }, [activeWorkspace?.name, userId, workspaceId, workspaces]);
+
+  const handleDeleteSharedWorkspace = useCallback(async () => {
+    if (!workspaceId) {
+      return;
+    }
+
+    const deletedWorkspaceName = activeWorkspace?.name ?? "workspace";
+
+    setIsWorkspaceActionLoading(true);
+
+    try {
+      await deleteSharedWorkspace(workspaceId);
+
+      const remainingWorkspaces = workspaces.filter((workspace) => workspace.id !== workspaceId);
+      const nextWorkspaceId = getPreferredFallbackWorkspaceId(remainingWorkspaces, userId);
+
+      setWorkspaces(remainingWorkspaces);
+      activeWorkspaceIdRef.current = nextWorkspaceId;
+      setWorkspaceId(nextWorkspaceId);
+      setWorkspaceMembers([]);
+      setPendingWorkspaceInvitations([]);
+      setLatestInviteLink(null);
+      setWorkspaceFeedback(`Deleted ${deletedWorkspaceName}`);
       setWorkspaceFeedbackTone("info");
 
       if (nextWorkspaceId) {
@@ -1343,12 +1395,14 @@ const Index = () => {
           }))}
           canManageWorkspaceInvites={canManageWorkspaceInvites}
           canManageWorkspaceMembers={canManageWorkspaceMembers}
+          canDeleteSharedWorkspace={canDeleteSharedWorkspace}
           onSelectWorkspace={handleSelectWorkspace}
           onCreateSharedWorkspace={handleCreateSharedWorkspace}
           onCreateWorkspaceInvitation={handleCreateWorkspaceInvitation}
           onRevokeWorkspaceInvitation={handleRevokeWorkspaceInvitation}
           onRemoveWorkspaceMember={handleRemoveWorkspaceMember}
           onLeaveSharedWorkspace={handleLeaveSharedWorkspace}
+          onDeleteSharedWorkspace={handleDeleteSharedWorkspace}
           onSignOut={handleSignOut}
           canCreateTask={!shouldUseSupabase || (!!userId && !!workspaceId)}
           isBoardLoading={isAuthLoading || isWorkspaceLoading || isBoardLoading}

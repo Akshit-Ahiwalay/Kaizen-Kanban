@@ -52,6 +52,7 @@ interface AccountMenuProps {
   pendingInvitations?: AccountWorkspaceInvitation[];
   canManageWorkspaceInvites?: boolean;
   canManageWorkspaceMembers?: boolean;
+  canDeleteSharedWorkspace?: boolean;
   isWorkspaceActionLoading?: boolean;
   isWorkspaceMembersLoading?: boolean;
   onSelectWorkspace?: (workspaceId: string) => void;
@@ -60,6 +61,7 @@ interface AccountMenuProps {
   onRevokeWorkspaceInvitation?: (invitationId: string) => Promise<void> | void;
   onRemoveWorkspaceMember?: (memberUserId: string) => Promise<void> | void;
   onLeaveSharedWorkspace?: () => Promise<void> | void;
+  onDeleteSharedWorkspace?: () => Promise<void> | void;
   onSignOut: () => Promise<void> | void;
 }
 
@@ -93,6 +95,7 @@ const AccountMenu = ({
   pendingInvitations = [],
   canManageWorkspaceInvites = false,
   canManageWorkspaceMembers = false,
+  canDeleteSharedWorkspace = false,
   isWorkspaceActionLoading = false,
   isWorkspaceMembersLoading = false,
   onSelectWorkspace,
@@ -101,6 +104,7 @@ const AccountMenu = ({
   onRevokeWorkspaceInvitation,
   onRemoveWorkspaceMember,
   onLeaveSharedWorkspace,
+  onDeleteSharedWorkspace,
   onSignOut,
 }: AccountMenuProps) => {
   const [open, setOpen] = useState(false);
@@ -117,6 +121,7 @@ const AccountMenu = ({
   const [copiedInviteLink, setCopiedInviteLink] = useState(false);
   const [isRevokingInviteId, setIsRevokingInviteId] = useState<string | null>(null);
   const [memberActionUserId, setMemberActionUserId] = useState<string | null>(null);
+  const [isDeleteWorkspaceConfirmOpen, setIsDeleteWorkspaceConfirmOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{
     left: number;
     top: number;
@@ -169,6 +174,16 @@ const AccountMenu = ({
 
     setInviteError("");
   }, [workspaceFeedback]);
+
+  useEffect(() => {
+    if (!open) {
+      setIsDeleteWorkspaceConfirmOpen(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setIsDeleteWorkspaceConfirmOpen(false);
+  }, [activeWorkspaceId]);
 
   useEffect(() => {
     if (!latestInviteLink) {
@@ -376,6 +391,15 @@ const AccountMenu = ({
     } finally {
       setMemberActionUserId(null);
     }
+  };
+
+  const handleDeleteSharedWorkspace = async () => {
+    if (!onDeleteSharedWorkspace) {
+      return;
+    }
+
+    await onDeleteSharedWorkspace();
+    setIsDeleteWorkspaceConfirmOpen(false);
   };
 
   return (
@@ -713,6 +737,55 @@ const AccountMenu = ({
                           </button>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {canDeleteSharedWorkspace && onDeleteSharedWorkspace && (
+                <div className="mt-3 border-t border-border/14 pt-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50">
+                        Delete Workspace
+                      </p>
+                      <p className="mt-1 font-body text-[12px] leading-relaxed text-seal/62">
+                        Permanently removes this shared workspace, its tasks, members, team roster, and invite links.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="shrink-0 border border-seal/24 px-3 py-2 text-[10px] font-body uppercase tracking-[0.16em] text-seal/68 transition-colors duration-300 hover:border-seal/38 hover:text-seal/82 disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+                      disabled={isWorkspaceActionLoading}
+                      onClick={() => setIsDeleteWorkspaceConfirmOpen((current) => !current)}
+                    >
+                      {isDeleteWorkspaceConfirmOpen ? "Cancel" : "Delete"}
+                    </button>
+                  </div>
+
+                  {isDeleteWorkspaceConfirmOpen && (
+                    <div className="mt-2.5 border border-seal/18 bg-seal/5 px-3 py-2.5">
+                      <p className="font-body text-[11px] uppercase tracking-[0.12em] text-seal/72">
+                        This cannot be undone.
+                      </p>
+                      <div className="mt-2.5 flex gap-2">
+                        <button
+                          type="button"
+                          className="flex-1 border border-seal/24 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-seal/72 transition-all duration-300 hover:border-seal/38 hover:text-seal/84 disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+                          disabled={isWorkspaceActionLoading}
+                          onClick={() => void handleDeleteSharedWorkspace()}
+                        >
+                          {isWorkspaceActionLoading ? "Deleting..." : "Delete Permanently"}
+                        </button>
+                        <button
+                          type="button"
+                          className="flex-1 border border-border/20 px-3.5 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-muted-foreground/62 transition-colors duration-300 hover:border-border/34 hover:text-foreground/76 disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/32"
+                          disabled={isWorkspaceActionLoading}
+                          onClick={() => setIsDeleteWorkspaceConfirmOpen(false)}
+                        >
+                          Keep Workspace
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

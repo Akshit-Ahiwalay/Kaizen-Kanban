@@ -73,6 +73,7 @@ interface BoardSceneProps {
   pendingWorkspaceInvitations?: AccountWorkspaceInvitation[];
   canManageWorkspaceInvites?: boolean;
   canManageWorkspaceMembers?: boolean;
+  canDeleteSharedWorkspace?: boolean;
   isWorkspaceActionLoading?: boolean;
   isWorkspaceMembersLoading?: boolean;
   onSelectWorkspace?: (workspaceId: string) => void;
@@ -81,6 +82,7 @@ interface BoardSceneProps {
   onRevokeWorkspaceInvitation?: (invitationId: string) => Promise<void> | void;
   onRemoveWorkspaceMember?: (memberUserId: string) => Promise<void> | void;
   onLeaveSharedWorkspace?: () => Promise<void> | void;
+  onDeleteSharedWorkspace?: () => Promise<void> | void;
   onSignOut: () => Promise<void> | void;
   canCreateTask?: boolean;
   isBoardLoading?: boolean;
@@ -118,6 +120,7 @@ const BoardScene = ({
   pendingWorkspaceInvitations = [],
   canManageWorkspaceInvites = false,
   canManageWorkspaceMembers = false,
+  canDeleteSharedWorkspace = false,
   isWorkspaceActionLoading = false,
   isWorkspaceMembersLoading = false,
   onSelectWorkspace,
@@ -126,6 +129,7 @@ const BoardScene = ({
   onRevokeWorkspaceInvitation,
   onRemoveWorkspaceMember,
   onLeaveSharedWorkspace,
+  onDeleteSharedWorkspace,
   onSignOut,
   canCreateTask = true,
   isBoardLoading = false,
@@ -329,6 +333,7 @@ const BoardScene = ({
                 pendingInvitations={pendingWorkspaceInvitations}
                 canManageWorkspaceInvites={canManageWorkspaceInvites}
                 canManageWorkspaceMembers={canManageWorkspaceMembers}
+                canDeleteSharedWorkspace={canDeleteSharedWorkspace}
                 isWorkspaceActionLoading={isWorkspaceActionLoading}
                 isWorkspaceMembersLoading={isWorkspaceMembersLoading}
                 onSelectWorkspace={onSelectWorkspace}
@@ -337,6 +342,7 @@ const BoardScene = ({
                 onRevokeWorkspaceInvitation={onRevokeWorkspaceInvitation}
                 onRemoveWorkspaceMember={onRemoveWorkspaceMember}
                 onLeaveSharedWorkspace={onLeaveSharedWorkspace}
+                onDeleteSharedWorkspace={onDeleteSharedWorkspace}
                 onSignOut={onSignOut}
               />
             )}

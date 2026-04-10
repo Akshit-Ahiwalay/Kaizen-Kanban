@@ -58,6 +58,7 @@ describe("AccountMenu", () => {
 
   it("shows workspace controls for a permanent owner", () => {
     const onRemoveWorkspaceMember = vi.fn().mockResolvedValue(undefined);
+    const onDeleteSharedWorkspace = vi.fn().mockResolvedValue(undefined);
 
     render(
       <AccountMenu
@@ -109,12 +110,14 @@ describe("AccountMenu", () => {
         ]}
         canManageWorkspaceInvites
         canManageWorkspaceMembers
+        canDeleteSharedWorkspace
         pendingInvitations={[{ id: "invite-1", invitedEmail: "teammate@example.com" }]}
         onCreateSharedWorkspace={vi.fn().mockResolvedValue(true)}
         onSelectWorkspace={vi.fn()}
         onCreateWorkspaceInvitation={vi.fn().mockResolvedValue("https://example.com/?invite=test")}
         onRevokeWorkspaceInvitation={vi.fn()}
         onRemoveWorkspaceMember={onRemoveWorkspaceMember}
+        onDeleteSharedWorkspace={onDeleteSharedWorkspace}
         onSignOut={vi.fn()}
       />,
     );
@@ -127,6 +130,7 @@ describe("AccountMenu", () => {
     expect(screen.getByLabelText(/invite collaborator email/i)).toBeInTheDocument();
     expect(screen.getByText("teammate@example.com")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /remove/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^delete$/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /leave/i })).not.toBeInTheDocument();
   });
 
@@ -180,6 +184,49 @@ describe("AccountMenu", () => {
 
     await waitFor(() => {
       expect(onRemoveWorkspaceMember).toHaveBeenCalledWith("user-2");
+    });
+  });
+
+  it("requires confirmation before deleting a shared workspace", async () => {
+    const onDeleteSharedWorkspace = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <AccountMenu
+        label="Morgan"
+        detail="morgan@example.com"
+        activeWorkspaceId="ws-2"
+        activeWorkspaceLabel="Product council"
+        activeWorkspaceDetail="Shared workspace you own | 2 members"
+        isActiveSharedWorkspace
+        workspaces={[
+          {
+            label: "Shared by you",
+            options: [
+              {
+                id: "ws-2",
+                label: "Product council",
+                description: "Shared workspace you own",
+                isShared: true,
+                isOwnedByCurrentUser: true,
+              },
+            ],
+          },
+        ]}
+        canDeleteSharedWorkspace
+        onDeleteSharedWorkspace={onDeleteSharedWorkspace}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
+    expect(screen.queryByRole("button", { name: /delete permanently/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    expect(screen.getByText(/this cannot be undone/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /delete permanently/i }));
+
+    await waitFor(() => {
+      expect(onDeleteSharedWorkspace).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -267,5 +314,6 @@ describe("AccountMenu", () => {
     expect(screen.getByRole("button", { name: /leave/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/invite collaborator email/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /remove/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^delete$/i })).not.toBeInTheDocument();
   });
 });
