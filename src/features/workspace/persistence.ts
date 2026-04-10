@@ -243,6 +243,35 @@ export const revokeWorkspaceInvitation = async (invitationId: string) => {
   }
 };
 
+export const removeWorkspaceMember = async (workspaceId: string, memberUserId: string) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("remove_workspace_member", {
+    p_workspace_id: workspaceId,
+    p_member_user_id: memberUserId,
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const leaveSharedWorkspace = async (workspaceId: string) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("leave_shared_workspace", {
+    p_workspace_id: workspaceId,
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+
 const canUseLocalStorage = () =>
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
@@ -321,8 +350,14 @@ export const getWorkspaceErrorMessage = (error: unknown) => {
       return "Workspace unavailable";
     case "workspace_forbidden":
       return "You no longer have access to this workspace";
+    case "workspace_member_not_found":
+      return "Member unavailable";
     case "workspace_members_personal_workspace_forbidden":
       return "Personal workspaces only include you";
+    case "workspace_owner_removal_forbidden":
+      return "The workspace owner cannot be removed";
+    case "workspace_owner_leave_forbidden":
+      return "Transfer ownership before leaving this workspace";
     default:
       if (message?.includes("create_shared_workspace")) {
         return "Shared workspace creation unavailable";

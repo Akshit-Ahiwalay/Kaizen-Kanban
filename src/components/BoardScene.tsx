@@ -72,12 +72,15 @@ interface BoardSceneProps {
   latestInviteLink?: string | null;
   pendingWorkspaceInvitations?: AccountWorkspaceInvitation[];
   canManageWorkspaceInvites?: boolean;
+  canManageWorkspaceMembers?: boolean;
   isWorkspaceActionLoading?: boolean;
   isWorkspaceMembersLoading?: boolean;
   onSelectWorkspace?: (workspaceId: string) => void;
   onCreateSharedWorkspace?: (name: string) => Promise<boolean>;
   onCreateWorkspaceInvitation?: (email: string) => Promise<string | null>;
   onRevokeWorkspaceInvitation?: (invitationId: string) => Promise<void> | void;
+  onRemoveWorkspaceMember?: (memberUserId: string) => Promise<void> | void;
+  onLeaveSharedWorkspace?: () => Promise<void> | void;
   onSignOut: () => Promise<void> | void;
   canCreateTask?: boolean;
   isBoardLoading?: boolean;
@@ -114,12 +117,15 @@ const BoardScene = ({
   latestInviteLink = null,
   pendingWorkspaceInvitations = [],
   canManageWorkspaceInvites = false,
+  canManageWorkspaceMembers = false,
   isWorkspaceActionLoading = false,
   isWorkspaceMembersLoading = false,
   onSelectWorkspace,
   onCreateSharedWorkspace,
   onCreateWorkspaceInvitation,
   onRevokeWorkspaceInvitation,
+  onRemoveWorkspaceMember,
+  onLeaveSharedWorkspace,
   onSignOut,
   canCreateTask = true,
   isBoardLoading = false,
@@ -322,12 +328,15 @@ const BoardScene = ({
                 latestInviteLink={latestInviteLink}
                 pendingInvitations={pendingWorkspaceInvitations}
                 canManageWorkspaceInvites={canManageWorkspaceInvites}
+                canManageWorkspaceMembers={canManageWorkspaceMembers}
                 isWorkspaceActionLoading={isWorkspaceActionLoading}
                 isWorkspaceMembersLoading={isWorkspaceMembersLoading}
                 onSelectWorkspace={onSelectWorkspace}
                 onCreateSharedWorkspace={onCreateSharedWorkspace}
                 onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
                 onRevokeWorkspaceInvitation={onRevokeWorkspaceInvitation}
+                onRemoveWorkspaceMember={onRemoveWorkspaceMember}
+                onLeaveSharedWorkspace={onLeaveSharedWorkspace}
                 onSignOut={onSignOut}
               />
             )}

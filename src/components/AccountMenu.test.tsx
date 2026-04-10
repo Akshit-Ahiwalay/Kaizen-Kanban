@@ -57,6 +57,8 @@ describe("AccountMenu", () => {
   });
 
   it("shows workspace controls for a permanent owner", () => {
+    const onRemoveWorkspaceMember = vi.fn().mockResolvedValue(undefined);
+
     render(
       <AccountMenu
         label="Morgan"
@@ -106,11 +108,13 @@ describe("AccountMenu", () => {
           },
         ]}
         canManageWorkspaceInvites
+        canManageWorkspaceMembers
         pendingInvitations={[{ id: "invite-1", invitedEmail: "teammate@example.com" }]}
         onCreateSharedWorkspace={vi.fn().mockResolvedValue(true)}
         onSelectWorkspace={vi.fn()}
         onCreateWorkspaceInvitation={vi.fn().mockResolvedValue("https://example.com/?invite=test")}
         onRevokeWorkspaceInvitation={vi.fn()}
+        onRemoveWorkspaceMember={onRemoveWorkspaceMember}
         onSignOut={vi.fn()}
       />,
     );
@@ -122,6 +126,61 @@ describe("AccountMenu", () => {
     expect(screen.getByText("Taylor")).toBeInTheDocument();
     expect(screen.getByLabelText(/invite collaborator email/i)).toBeInTheDocument();
     expect(screen.getByText("teammate@example.com")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /remove/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /leave/i })).not.toBeInTheDocument();
+  });
+
+  it("allows an owner to remove a non-owner member", async () => {
+    const onRemoveWorkspaceMember = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <AccountMenu
+        label="Morgan"
+        detail="morgan@example.com"
+        activeWorkspaceId="ws-2"
+        activeWorkspaceLabel="Product council"
+        activeWorkspaceDetail="Shared workspace you own | 2 members"
+        isActiveSharedWorkspace
+        workspaces={[
+          {
+            label: "Shared by you",
+            options: [
+              {
+                id: "ws-2",
+                label: "Product council",
+                description: "Shared workspace you own",
+                isShared: true,
+                isOwnedByCurrentUser: true,
+              },
+            ],
+          },
+        ]}
+        workspaceMembers={[
+          {
+            id: "user-1",
+            label: "Morgan",
+            detail: "morgan@example.com",
+            isOwner: true,
+            isCurrentUser: true,
+          },
+          {
+            id: "user-2",
+            label: "Taylor",
+            detail: "taylor@example.com",
+          },
+        ]}
+        canManageWorkspaceMembers
+        onRemoveWorkspaceMember={onRemoveWorkspaceMember}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
+    fireEvent.click(screen.getByRole("button", { name: /remove/i }));
+
+    await waitFor(() => {
+      expect(onRemoveWorkspaceMember).toHaveBeenCalledWith("user-2");
+    });
   });
 
   it("allows creating a shared workspace from the account menu", async () => {
@@ -164,6 +223,8 @@ describe("AccountMenu", () => {
   });
 
   it("hides invite controls for shared workspaces the user does not own", () => {
+    const onLeaveSharedWorkspace = vi.fn().mockResolvedValue(undefined);
+
     render(
       <AccountMenu
         label="Morgan"
@@ -194,6 +255,7 @@ describe("AccountMenu", () => {
             isCurrentUser: true,
           },
         ]}
+        onLeaveSharedWorkspace={onLeaveSharedWorkspace}
         onCreateSharedWorkspace={vi.fn().mockResolvedValue(true)}
         onSignOut={vi.fn()}
       />,
@@ -202,6 +264,8 @@ describe("AccountMenu", () => {
     fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
 
     expect(screen.getByText("You")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /leave/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/invite collaborator email/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /remove/i })).not.toBeInTheDocument();
   });
 });

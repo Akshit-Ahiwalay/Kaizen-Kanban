@@ -51,12 +51,15 @@ interface AccountMenuProps {
   latestInviteLink?: string | null;
   pendingInvitations?: AccountWorkspaceInvitation[];
   canManageWorkspaceInvites?: boolean;
+  canManageWorkspaceMembers?: boolean;
   isWorkspaceActionLoading?: boolean;
   isWorkspaceMembersLoading?: boolean;
   onSelectWorkspace?: (workspaceId: string) => void;
   onCreateSharedWorkspace?: (name: string) => Promise<boolean>;
   onCreateWorkspaceInvitation?: (email: string) => Promise<string | null>;
   onRevokeWorkspaceInvitation?: (invitationId: string) => Promise<void> | void;
+  onRemoveWorkspaceMember?: (memberUserId: string) => Promise<void> | void;
+  onLeaveSharedWorkspace?: () => Promise<void> | void;
   onSignOut: () => Promise<void> | void;
 }
 
@@ -89,12 +92,15 @@ const AccountMenu = ({
   latestInviteLink = null,
   pendingInvitations = [],
   canManageWorkspaceInvites = false,
+  canManageWorkspaceMembers = false,
   isWorkspaceActionLoading = false,
   isWorkspaceMembersLoading = false,
   onSelectWorkspace,
   onCreateSharedWorkspace,
   onCreateWorkspaceInvitation,
   onRevokeWorkspaceInvitation,
+  onRemoveWorkspaceMember,
+  onLeaveSharedWorkspace,
   onSignOut,
 }: AccountMenuProps) => {
   const [open, setOpen] = useState(false);
@@ -110,6 +116,7 @@ const AccountMenu = ({
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [copiedInviteLink, setCopiedInviteLink] = useState(false);
   const [isRevokingInviteId, setIsRevokingInviteId] = useState<string | null>(null);
+  const [memberActionUserId, setMemberActionUserId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{
     left: number;
     top: number;
@@ -347,6 +354,30 @@ const AccountMenu = ({
     setCopiedInviteLink(true);
   };
 
+  const handleMemberAction = async (member: AccountWorkspaceMember) => {
+    const canRemoveMember =
+      canManageWorkspaceMembers && !member.isOwner && !member.isCurrentUser && !!onRemoveWorkspaceMember;
+    const canLeaveWorkspace =
+      !canManageWorkspaceMembers && member.isCurrentUser && !member.isOwner && !!onLeaveSharedWorkspace;
+
+    if (!canRemoveMember && !canLeaveWorkspace) {
+      return;
+    }
+
+    setMemberActionUserId(member.id);
+
+    try {
+      if (canRemoveMember) {
+        await onRemoveWorkspaceMember?.(member.id);
+        return;
+      }
+
+      await onLeaveSharedWorkspace?.();
+    } finally {
+      setMemberActionUserId(null);
+    }
+  };
+
   return (
     <div className="relative max-w-full" ref={containerRef}>
       <button
@@ -566,6 +597,29 @@ const AccountMenu = ({
                                 <span className="border border-olive/18 bg-olive/7 px-2 py-1 font-body text-[9px] uppercase tracking-[0.14em] text-olive/68">
                                   Owner
                                 </span>
+                              )}
+                              {((canManageWorkspaceMembers &&
+                                !member.isOwner &&
+                                !member.isCurrentUser &&
+                                !!onRemoveWorkspaceMember) ||
+                                (!canManageWorkspaceMembers &&
+                                  member.isCurrentUser &&
+                                  !member.isOwner &&
+                                  !!onLeaveSharedWorkspace)) && (
+                                <button
+                                  type="button"
+                                  className="shrink-0 text-[10px] font-body uppercase tracking-[0.14em] text-seal/68 transition-colors duration-300 hover:text-seal/82 disabled:cursor-not-allowed disabled:text-muted-foreground/34"
+                                  disabled={isWorkspaceActionLoading || memberActionUserId === member.id}
+                                  onClick={() => void handleMemberAction(member)}
+                                >
+                                  {memberActionUserId === member.id
+                                    ? canManageWorkspaceMembers
+                                      ? "Removing..."
+                                      : "Leaving..."
+                                    : canManageWorkspaceMembers
+                                      ? "Remove"
+                                      : "Leave"}
+                                </button>
                               )}
                             </div>
                           </div>

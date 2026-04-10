@@ -213,6 +213,19 @@ export interface Database {
         };
         Returns: undefined;
       };
+      remove_workspace_member: {
+        Args: {
+          p_workspace_id: string;
+          p_member_user_id: string;
+        };
+        Returns: undefined;
+      };
+      leave_shared_workspace: {
+        Args: {
+          p_workspace_id: string;
+        };
+        Returns: undefined;
+      };
       list_workspace_members: {
         Args: {
           p_workspace_id: string;
