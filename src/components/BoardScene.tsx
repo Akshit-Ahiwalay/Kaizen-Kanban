@@ -28,8 +28,9 @@ import type {
   UpdateTaskInput,
 } from "@/features/board/types";
 import type {
+  AccountWorkspaceGroup,
   AccountWorkspaceInvitation,
-  AccountWorkspaceOption,
+  AccountWorkspaceMember,
 } from "./AccountMenu";
 import BoardColumn from "./BoardColumn";
 import AccountMenu from "./AccountMenu";
@@ -61,13 +62,20 @@ interface BoardSceneProps {
   onUpgradeGuestWithGoogle?: () => Promise<void> | void;
   onUpgradeGuestWithEmail?: (email: string) => Promise<boolean>;
   activeWorkspaceId?: string | null;
-  workspaces?: AccountWorkspaceOption[];
+  activeWorkspaceLabel?: string | null;
+  activeWorkspaceDetail?: string | null;
+  isActiveSharedWorkspace?: boolean;
+  workspaces?: AccountWorkspaceGroup[];
+  workspaceMembers?: AccountWorkspaceMember[];
   workspaceFeedback?: string | null;
   workspaceFeedbackTone?: "success" | "error" | "info" | null;
   latestInviteLink?: string | null;
   pendingWorkspaceInvitations?: AccountWorkspaceInvitation[];
   canManageWorkspaceInvites?: boolean;
+  isWorkspaceActionLoading?: boolean;
+  isWorkspaceMembersLoading?: boolean;
   onSelectWorkspace?: (workspaceId: string) => void;
+  onCreateSharedWorkspace?: (name: string) => Promise<boolean>;
   onCreateWorkspaceInvitation?: (email: string) => Promise<string | null>;
   onRevokeWorkspaceInvitation?: (invitationId: string) => Promise<void> | void;
   onSignOut: () => Promise<void> | void;
@@ -96,13 +104,20 @@ const BoardScene = ({
   onUpgradeGuestWithGoogle,
   onUpgradeGuestWithEmail,
   activeWorkspaceId = null,
+  activeWorkspaceLabel = null,
+  activeWorkspaceDetail = null,
+  isActiveSharedWorkspace = false,
   workspaces = [],
+  workspaceMembers = [],
   workspaceFeedback = null,
   workspaceFeedbackTone = null,
   latestInviteLink = null,
   pendingWorkspaceInvitations = [],
   canManageWorkspaceInvites = false,
+  isWorkspaceActionLoading = false,
+  isWorkspaceMembersLoading = false,
   onSelectWorkspace,
+  onCreateSharedWorkspace,
   onCreateWorkspaceInvitation,
   onRevokeWorkspaceInvitation,
   onSignOut,
@@ -297,13 +312,20 @@ const BoardScene = ({
                 onUpgradeWithGoogle={onUpgradeGuestWithGoogle}
                 onUpgradeWithEmail={onUpgradeGuestWithEmail}
                 activeWorkspaceId={activeWorkspaceId}
+                activeWorkspaceLabel={activeWorkspaceLabel}
+                activeWorkspaceDetail={activeWorkspaceDetail}
+                isActiveSharedWorkspace={isActiveSharedWorkspace}
                 workspaces={workspaces}
+                workspaceMembers={workspaceMembers}
                 workspaceFeedback={workspaceFeedback}
                 workspaceFeedbackTone={workspaceFeedbackTone}
                 latestInviteLink={latestInviteLink}
                 pendingInvitations={pendingWorkspaceInvitations}
                 canManageWorkspaceInvites={canManageWorkspaceInvites}
+                isWorkspaceActionLoading={isWorkspaceActionLoading}
+                isWorkspaceMembersLoading={isWorkspaceMembersLoading}
                 onSelectWorkspace={onSelectWorkspace}
+                onCreateSharedWorkspace={onCreateSharedWorkspace}
                 onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
                 onRevokeWorkspaceInvitation={onRevokeWorkspaceInvitation}
                 onSignOut={onSignOut}

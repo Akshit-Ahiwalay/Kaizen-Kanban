@@ -29,13 +29,17 @@ import { ensurePersonalWorkspaceForCurrentUser } from "@/features/workspace/pers
 import {
   acceptWorkspaceInvitation,
   clearStoredActiveWorkspaceId,
+  createSharedWorkspace,
   createWorkspaceInvitation,
+  fetchWorkspaceMembers,
   fetchWorkspaceInvitationsForOwner,
   fetchWorkspacesForCurrentUser,
   getStoredActiveWorkspaceId,
+  getWorkspaceErrorMessage,
   getWorkspaceInvitationErrorMessage,
   revokeWorkspaceInvitation,
   storeActiveWorkspaceId,
+  type WorkspaceMemberSummary,
   type WorkspaceInvitationSummary,
   type WorkspaceSummary,
 } from "@/features/workspace/persistence";
@@ -80,16 +84,43 @@ const buildWorkspaceInviteLink = (rawToken: string) => {
   return inviteUrl.toString();
 };
 
-const resolveWorkspaceLabel = (workspace: WorkspaceSummary, currentUserId: string | null) => {
-  if (workspace.personalForUserId === currentUserId) {
-    return `${workspace.name} (yours)`;
-  }
+const isSharedWorkspace = (workspace: WorkspaceSummary | null) =>
+  Boolean(workspace && !workspace.personalForUserId);
 
-  if (workspace.personalForUserId) {
-    return `${workspace.name} (shared)`;
-  }
+const buildWorkspaceGroups = (workspaces: WorkspaceSummary[], currentUserId: string | null) => {
+  const personal = workspaces
+    .filter((workspace) => workspace.personalForUserId === currentUserId)
+    .map((workspace) => ({
+      id: workspace.id,
+      label: workspace.name,
+      description: "Private to you",
+      isShared: false,
+      isOwnedByCurrentUser: true,
+    }));
+  const ownedShared = workspaces
+    .filter((workspace) => !workspace.personalForUserId && workspace.ownerUserId === currentUserId)
+    .map((workspace) => ({
+      id: workspace.id,
+      label: workspace.name,
+      description: "Shared workspace you own",
+      isShared: true,
+      isOwnedByCurrentUser: true,
+    }));
+  const joinedShared = workspaces
+    .filter((workspace) => !workspace.personalForUserId && workspace.ownerUserId !== currentUserId)
+    .map((workspace) => ({
+      id: workspace.id,
+      label: workspace.name,
+      description: "Shared workspace",
+      isShared: true,
+      isOwnedByCurrentUser: false,
+    }));
 
-  return workspace.name;
+  return [
+    personal.length > 0 ? { label: "Personal", options: personal } : null,
+    ownedShared.length > 0 ? { label: "Shared by you", options: ownedShared } : null,
+    joinedShared.length > 0 ? { label: "Shared with you", options: joinedShared } : null,
+  ].filter((group): group is NonNullable<typeof group> => group !== null);
 };
 
 const Index = () => {
@@ -106,6 +137,7 @@ const Index = () => {
   const [profile, setProfile] = useState<AppProfile | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<WorkspaceSummary[]>([]);
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMemberSummary[]>([]);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [pendingWorkspaceInvitations, setPendingWorkspaceInvitations] = useState<
     WorkspaceInvitationSummary[]
@@ -125,6 +157,8 @@ const Index = () => {
   const [workspaceFeedbackTone, setWorkspaceFeedbackTone] = useState<
     "success" | "error" | "info" | null
   >(null);
+  const [isWorkspaceActionLoading, setIsWorkspaceActionLoading] = useState(false);
+  const [isWorkspaceMembersLoading, setIsWorkspaceMembersLoading] = useState(false);
   const [latestInviteLink, setLatestInviteLink] = useState<string | null>(null);
   const activeWorkspaceIdRef = useRef<string | null>(null);
 
@@ -132,24 +166,40 @@ const Index = () => {
     () => workspaces.find((workspace) => workspace.id === workspaceId) ?? null,
     [workspaceId, workspaces],
   );
+  const isActiveSharedWorkspace = useMemo(() => isSharedWorkspace(activeWorkspace), [activeWorkspace]);
   const canManageWorkspaceInvites = useMemo(
     () =>
       Boolean(
         activeWorkspace &&
+          !activeWorkspace.personalForUserId &&
           userId &&
           !session?.user?.is_anonymous &&
           activeWorkspace.ownerUserId === userId,
       ),
     [activeWorkspace, session?.user?.is_anonymous, userId],
   );
-  const workspaceOptions = useMemo(
+  const workspaceGroups = useMemo(() => buildWorkspaceGroups(workspaces, userId), [userId, workspaces]);
+  const activeWorkspaceOption = useMemo(
     () =>
-      workspaces.map((workspace) => ({
-        id: workspace.id,
-        label: resolveWorkspaceLabel(workspace, userId),
-      })),
-    [userId, workspaces],
+      workspaceGroups
+        .flatMap((group) => group.options)
+        .find((workspace) => workspace.id === activeWorkspace?.id) ?? null,
+    [activeWorkspace?.id, workspaceGroups],
   );
+  const activeWorkspaceDetail = useMemo(() => {
+    if (!activeWorkspaceOption) {
+      return null;
+    }
+
+    if (!activeWorkspaceOption.isShared) {
+      return activeWorkspaceOption.description;
+    }
+
+    const memberCount = workspaceMembers.length;
+    const memberLabel = `${memberCount} ${memberCount === 1 ? "member" : "members"}`;
+
+    return `${activeWorkspaceOption.description} | ${memberLabel}`;
+  }, [activeWorkspaceOption, workspaceMembers.length]);
   const requiresPermanentInviteAuth = hasPendingWorkspaceInvite && (!session?.user || session.user.is_anonymous);
 
   const handleEnter = useCallback(() => {
@@ -237,10 +287,13 @@ const Index = () => {
       setGuestUpgradeFeedback(null);
       setGuestUpgradeFeedbackTone(null);
       setWorkspaces([]);
+      setWorkspaceMembers([]);
       setWorkspaceId(null);
       setPendingWorkspaceInvitations([]);
       setWorkspaceFeedback(null);
       setWorkspaceFeedbackTone(null);
+      setIsWorkspaceActionLoading(false);
+      setIsWorkspaceMembersLoading(false);
       setLatestInviteLink(null);
       setIsWorkspaceLoading(false);
       clearStoredActiveWorkspaceId();
@@ -515,6 +568,57 @@ const Index = () => {
     activeWorkspaceIdRef.current = workspaceId;
   }, [workspaceId]);
 
+  const handleCreateSharedWorkspace = useCallback(
+    async (name: string) => {
+      if (!userId) {
+        setWorkspaceFeedback("Sign in to continue");
+        setWorkspaceFeedbackTone("error");
+        return false;
+      }
+
+      setIsWorkspaceActionLoading(true);
+
+      try {
+        const createdWorkspace = await createSharedWorkspace(name);
+        const optimisticWorkspace: WorkspaceSummary = {
+          id: createdWorkspace.workspaceId,
+          name: createdWorkspace.workspaceName,
+          ownerUserId: userId,
+          personalForUserId: undefined,
+        };
+
+        setWorkspaces((currentWorkspaces) =>
+          currentWorkspaces.some((workspace) => workspace.id === optimisticWorkspace.id)
+            ? currentWorkspaces
+            : [...currentWorkspaces, optimisticWorkspace],
+        );
+        activeWorkspaceIdRef.current = createdWorkspace.workspaceId;
+        setWorkspaceId(createdWorkspace.workspaceId);
+        setWorkspaceMembers([]);
+        setPendingWorkspaceInvitations([]);
+        storeActiveWorkspaceId(createdWorkspace.workspaceId);
+        setLatestInviteLink(null);
+        setWorkspaceFeedback(`Created ${createdWorkspace.workspaceName}`);
+        setWorkspaceFeedbackTone("success");
+        void fetchWorkspacesForCurrentUser()
+          .then((nextWorkspaces) => {
+            setWorkspaces(nextWorkspaces);
+          })
+          .catch(() => {
+            // Preserve the newly-created workspace selection even if the follow-up refresh fails.
+          });
+        return true;
+      } catch (error) {
+        setWorkspaceFeedback(getWorkspaceErrorMessage(error));
+        setWorkspaceFeedbackTone("error");
+        return false;
+      } finally {
+        setIsWorkspaceActionLoading(false);
+      }
+    },
+    [userId],
+  );
+
   const handleCreateWorkspaceInvitation = useCallback(
     async (email: string) => {
       if (!workspaceId) {
@@ -714,6 +818,7 @@ const Index = () => {
     if (!userId) {
       if (!isAuthLoading) {
         setWorkspaces([]);
+        setWorkspaceMembers([]);
         setWorkspaceId(null);
         setIsWorkspaceLoading(false);
       }
@@ -810,6 +915,7 @@ const Index = () => {
         }
 
         setWorkspaces([]);
+        setWorkspaceMembers([]);
         setWorkspaceId(null);
         setSyncError("Workspace unavailable");
       } finally {
@@ -860,6 +966,49 @@ const Index = () => {
       isMounted = false;
     };
   }, [canManageWorkspaceInvites, workspaceId]);
+
+  useEffect(() => {
+    if (!shouldUseSupabase) {
+      return;
+    }
+
+    if (!activeWorkspace || !isSharedWorkspace(activeWorkspace)) {
+      setWorkspaceMembers([]);
+      setIsWorkspaceMembersLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    void (async () => {
+      setIsWorkspaceMembersLoading(true);
+      setWorkspaceMembers([]);
+
+      try {
+        const nextMembers = await fetchWorkspaceMembers(activeWorkspace.id);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setWorkspaceMembers(nextMembers);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setWorkspaceMembers([]);
+      } finally {
+        if (isMounted) {
+          setIsWorkspaceMembersLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeWorkspace]);
 
   useEffect(() => {
     if (!shouldUseSupabase) {
@@ -1083,16 +1232,30 @@ const Index = () => {
           onUpgradeGuestWithGoogle={handleUpgradeGuestWithGoogle}
           onUpgradeGuestWithEmail={handleUpgradeGuestWithEmail}
           activeWorkspaceId={workspaceId}
-          workspaces={workspaceOptions}
+          activeWorkspaceLabel={activeWorkspace?.name ?? null}
+          activeWorkspaceDetail={activeWorkspaceDetail}
+          isActiveSharedWorkspace={isActiveSharedWorkspace}
+          workspaces={workspaceGroups}
           workspaceFeedback={workspaceFeedback}
           workspaceFeedbackTone={workspaceFeedbackTone}
           latestInviteLink={latestInviteLink}
+          workspaceMembers={workspaceMembers.map((member) => ({
+            id: member.userId,
+            label: member.displayName?.trim() || member.email?.trim() || "Workspace member",
+            detail: member.email?.trim() || null,
+            avatarUrl: member.avatarUrl,
+            isOwner: member.isOwner,
+            isCurrentUser: member.userId === userId,
+          }))}
+          isWorkspaceActionLoading={isWorkspaceActionLoading}
+          isWorkspaceMembersLoading={isWorkspaceMembersLoading}
           pendingWorkspaceInvitations={pendingWorkspaceInvitations.map((invitation) => ({
             id: invitation.id,
             invitedEmail: invitation.invitedEmail,
           }))}
           canManageWorkspaceInvites={canManageWorkspaceInvites}
           onSelectWorkspace={handleSelectWorkspace}
+          onCreateSharedWorkspace={handleCreateSharedWorkspace}
           onCreateWorkspaceInvitation={handleCreateWorkspaceInvitation}
           onRevokeWorkspaceInvitation={handleRevokeWorkspaceInvitation}
           onSignOut={handleSignOut}

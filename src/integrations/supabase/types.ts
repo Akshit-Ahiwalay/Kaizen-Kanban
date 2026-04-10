@@ -177,6 +177,15 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      create_shared_workspace: {
+        Args: {
+          p_name: string;
+        };
+        Returns: {
+          workspace_id: string;
+          workspace_name: string;
+        }[];
+      };
       create_workspace_invitation: {
         Args: {
           p_workspace_id: string;
@@ -203,6 +212,19 @@ export interface Database {
           p_invitation_id: string;
         };
         Returns: undefined;
+      };
+      list_workspace_members: {
+        Args: {
+          p_workspace_id: string;
+        };
+        Returns: {
+          user_id: string;
+          display_name: string | null;
+          email: string | null;
+          avatar_url: string | null;
+          joined_at: string;
+          is_owner: boolean;
+        }[];
       };
     };
   };

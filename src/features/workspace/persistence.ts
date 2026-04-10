@@ -13,11 +13,25 @@ export interface WorkspaceSummary {
   personalForUserId?: string;
 }
 
+export interface CreatedSharedWorkspace {
+  workspaceId: string;
+  workspaceName: string;
+}
+
 export interface WorkspaceInvitationSummary {
   id: string;
   invitedEmail: string;
   expiresAt: string;
   createdAt: string;
+}
+
+export interface WorkspaceMemberSummary {
+  userId: string;
+  displayName: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+  joinedAt: string;
+  isOwner: boolean;
 }
 
 export interface CreatedWorkspaceInvitation {
@@ -31,6 +45,14 @@ export interface AcceptedWorkspaceInvitation {
   workspaceId: string;
   workspaceName: string;
 }
+
+const getFirstRpcRow = <TRow>(data: TRow[] | TRow | null | undefined): TRow | null => {
+  if (Array.isArray(data)) {
+    return data[0] ?? null;
+  }
+
+  return data ?? null;
+};
 
 export const ensurePersonalWorkspaceForCurrentUser = async (): Promise<PersonalWorkspace> => {
   if (!supabase) {
@@ -69,6 +91,56 @@ export const fetchWorkspacesForCurrentUser = async (): Promise<WorkspaceSummary[
     name: workspace.name,
     ownerUserId: workspace.owner_user_id,
     personalForUserId: workspace.personal_for_user_id ?? undefined,
+  }));
+};
+
+export const createSharedWorkspace = async (name: string): Promise<CreatedSharedWorkspace> => {
+  if (!supabase) {
+    throw new Error("Supabase client unavailable");
+  }
+
+  const { data, error } = await supabase.rpc("create_shared_workspace", {
+    p_name: name,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const createdWorkspace = getFirstRpcRow(data);
+
+  if (!createdWorkspace) {
+    throw new Error("Workspace unavailable");
+  }
+
+  return {
+    workspaceId: createdWorkspace.workspace_id,
+    workspaceName: createdWorkspace.workspace_name,
+  };
+};
+
+export const fetchWorkspaceMembers = async (
+  workspaceId: string,
+): Promise<WorkspaceMemberSummary[]> => {
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase.rpc("list_workspace_members", {
+    p_workspace_id: workspaceId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((member) => ({
+    userId: member.user_id,
+    displayName: member.display_name,
+    email: member.email,
+    avatarUrl: member.avatar_url,
+    joinedAt: member.joined_at,
+    isOwner: member.is_owner,
   }));
 };
 
@@ -236,5 +308,26 @@ export const getWorkspaceInvitationErrorMessage = (error: unknown) => {
       return "This invite no longer exists";
     default:
       return "Workspace invite unavailable";
+  }
+};
+
+export const getWorkspaceErrorMessage = (error: unknown) => {
+  const message = resolveWorkspaceErrorCode(error);
+
+  switch (message) {
+    case "workspace_requires_authentication":
+      return "Sign in to continue";
+    case "workspace_not_found":
+      return "Workspace unavailable";
+    case "workspace_forbidden":
+      return "You no longer have access to this workspace";
+    case "workspace_members_personal_workspace_forbidden":
+      return "Personal workspaces only include you";
+    default:
+      if (message?.includes("create_shared_workspace")) {
+        return "Shared workspace creation unavailable";
+      }
+
+      return "Workspace unavailable";
   }
 };
