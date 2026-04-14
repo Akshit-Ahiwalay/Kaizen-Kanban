@@ -1,5 +1,13 @@
 import type { KanbanPriority, TaskStatus } from "@/features/board/types";
 
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export interface Database {
   public: {
     Tables: {
@@ -41,6 +49,76 @@ export interface Database {
           sort_order?: number;
           workspace_id?: string | null;
           user_id?: string;
+          created_at?: string;
+        };
+      };
+      task_comments: {
+        Row: {
+          id: string;
+          task_id: string;
+          workspace_id: string;
+          author_user_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          workspace_id?: string;
+          author_user_id?: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          workspace_id?: string;
+          author_user_id?: string;
+          body?: string;
+          created_at?: string;
+        };
+      };
+      task_activity: {
+        Row: {
+          id: string;
+          task_id: string;
+          workspace_id: string;
+          actor_user_id: string;
+          event_type:
+            | "task_created"
+            | "task_edited"
+            | "task_moved"
+            | "assignee_changed"
+            | "comment_added";
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          workspace_id: string;
+          actor_user_id: string;
+          event_type:
+            | "task_created"
+            | "task_edited"
+            | "task_moved"
+            | "assignee_changed"
+            | "comment_added";
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          workspace_id?: string;
+          actor_user_id?: string;
+          event_type?:
+            | "task_created"
+            | "task_edited"
+            | "task_moved"
+            | "assignee_changed"
+            | "comment_added";
+          metadata?: Json;
           created_at?: string;
         };
       };

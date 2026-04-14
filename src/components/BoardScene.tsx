@@ -10,7 +10,7 @@ import {
 } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, SlidersHorizontal, Users } from "lucide-react";
+import { History, Plus, Search, SlidersHorizontal, Users } from "lucide-react";
 import {
   ALL_ASSIGNEES_FILTER,
   DEFAULT_BOARD_FILTERS,
@@ -38,6 +38,7 @@ import CreateTaskDialog from "./CreateTaskDialog";
 import TaskCard from "./TaskCard";
 import TaskDetailDialog from "./TaskDetailDialog";
 import TeamMembersDialog from "./TeamMembersDialog";
+import ActivityHistorySheet from "./ActivityHistorySheet";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -139,6 +140,7 @@ const BoardScene = ({
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [recentlyMovedTaskId, setRecentlyMovedTaskId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isActivityHistoryOpen, setIsActivityHistoryOpen] = useState(false);
   const [isFilterTrayOpen, setIsFilterTrayOpen] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_BOARD_FILTERS);
   const sensors = useSensors(
@@ -310,6 +312,15 @@ const BoardScene = ({
                 <span>{statusText}</span>
               </span>
             )}
+            <button
+              type="button"
+              aria-label="Open activity history"
+              className="inline-flex h-10 w-10 items-center justify-center border border-border/24 bg-background/42 text-muted-foreground/56 transition-colors duration-300 hover:border-border/40 hover:text-foreground/78 disabled:cursor-not-allowed disabled:border-border/14 disabled:text-muted-foreground/28"
+              disabled={!activeWorkspaceId}
+              onClick={() => setIsActivityHistoryOpen(true)}
+            >
+              <History size={15} />
+            </button>
             {accountLabel && (
               <AccountMenu
                 label={accountLabel}
@@ -553,9 +564,20 @@ const BoardScene = ({
         task={selectedTaskEntry?.task ?? null}
         status={selectedTaskEntry?.status ?? null}
         teamMembers={teamMembers}
+        workspaceMembers={workspaceMembers}
         onOpenChange={handleTaskDetailOpenChange}
         onSaveTask={onUpdateTask}
         onDeleteTask={onDeleteTask}
+      />
+
+      <ActivityHistorySheet
+        open={isActivityHistoryOpen}
+        workspaceId={activeWorkspaceId}
+        workspaceLabel={activeWorkspaceLabel}
+        currentUserLabel={accountLabel}
+        workspaceMembers={workspaceMembers}
+        teamMembers={teamMembers}
+        onOpenChange={setIsActivityHistoryOpen}
       />
     </div>
   );

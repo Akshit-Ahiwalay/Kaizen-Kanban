@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import type {
   BoardColumnId,
@@ -7,14 +7,21 @@ import type {
   TeamMember,
   UpdateTaskInput,
 } from "@/features/board/types";
+import {
+  createTaskComment,
+  fetchTaskComments,
+} from "@/features/task-detail/persistence";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { AccountWorkspaceMember } from "./AccountMenu";
 
 interface TaskDetailDialogProps {
   open: boolean;
   task: KanbanCard | null;
   status: BoardColumnId | null;
   teamMembers: TeamMember[];
+  workspaceMembers?: AccountWorkspaceMember[];
   onOpenChange: (open: boolean) => void;
   onSaveTask: (task: UpdateTaskInput) => Promise<boolean>;
   onDeleteTask: (taskId: string) => Promise<boolean>;
@@ -46,14 +53,37 @@ const DEFAULT_DRAFT: TaskDraft = {
 };
 const fieldLabelClassName =
   "block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/66";
+const sectionLabelClassName =
+  "block font-body text-[11px] uppercase tracking-[0.22em] text-muted-foreground/62";
 const modalSelectClassName =
   "h-11 w-full appearance-none rounded-[0.6rem] border border-border/34 bg-[hsl(var(--background)/0.66)] px-3.5 pr-10 font-body text-[14px] text-foreground/82 shadow-[inset_0_1px_0_hsl(var(--background)/0.58)] transition-[border-color,background-color,box-shadow,color] duration-200 hover:border-border/46 focus:border-foreground/16 focus:bg-[hsl(var(--background)/0.82)] focus:outline-none focus:shadow-[inset_0_1px_0_hsl(var(--background)/0.8),0_0_0_1px_hsl(var(--olive)/0.16)]";
+
+const formatTimestamp = (value: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+
+const resolveMemberLabel = (
+  userId: string,
+  currentUserId: string | null,
+  memberLabels: Map<string, string>,
+) => {
+  if (currentUserId && userId === currentUserId) {
+    return "You";
+  }
+
+  return memberLabels.get(userId) ?? "Workspace member";
+};
 
 const TaskDetailDialog = ({
   open,
   task,
   status,
   teamMembers,
+  workspaceMembers = [],
   onOpenChange,
   onSaveTask,
   onDeleteTask,
@@ -65,7 +95,18 @@ const TaskDetailDialog = ({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [comments, setComments] = useState<Awaited<ReturnType<typeof fetchTaskComments>>>([]);
+  const [isThreadLoading, setIsThreadLoading] = useState(false);
+  const [threadError, setThreadError] = useState("");
+  const [commentDraft, setCommentDraft] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const dueDateInputRef = useRef<HTMLInputElement | null>(null);
+  const memberLabels = useMemo(
+    () => new Map(workspaceMembers.map((member) => [member.id, member.label])),
+    [workspaceMembers],
+  );
 
   useEffect(() => {
     if (!open || !task || !status) {
@@ -103,6 +144,56 @@ const TaskDetailDialog = ({
 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onOpenChange, open]);
+
+  useEffect(() => {
+    if (!open || !task) {
+      setComments([]);
+      setCurrentUserId(null);
+      setThreadError("");
+      setCommentDraft("");
+      setCommentError("");
+      setIsSubmittingComment(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadThread = async () => {
+      setIsThreadLoading(true);
+      setThreadError("");
+
+      try {
+        const [nextComments, currentUserResponse] = await Promise.all([
+          fetchTaskComments(task.id),
+          supabase?.auth.getUser() ?? Promise.resolve({ data: { user: null }, error: null }),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setComments(nextComments);
+        setCurrentUserId(currentUserResponse.data.user?.id ?? null);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setComments([]);
+        setThreadError("Comments unavailable");
+      } finally {
+        if (isMounted) {
+          setIsThreadLoading(false);
+        }
+      }
+    };
+
+    void loadThread();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open, task]);
 
   if (!open || !task || !status) {
     return null;
@@ -177,6 +268,30 @@ const TaskDetailDialog = ({
     }
 
     input.click();
+  };
+
+  const handleCreateComment = async () => {
+    const trimmedBody = commentDraft.trim();
+
+    if (!trimmedBody) {
+      setCommentError("Comment is required.");
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    setCommentError("");
+    setThreadError("");
+
+    try {
+      const createdComment = await createTaskComment(task.id, trimmedBody);
+
+      setComments((currentComments) => [...currentComments, createdComment]);
+      setCommentDraft("");
+    } catch {
+      setCommentError("Comment issue");
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   return (
@@ -356,6 +471,91 @@ const TaskDetailDialog = ({
                   className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/52"
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-border/16 pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className={sectionLabelClassName}>Comments</p>
+                <p className="mt-1 font-body text-[12px] leading-relaxed text-muted-foreground/56">
+                  Simple text updates for this task.
+                </p>
+              </div>
+              <span className="shrink-0 font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/44">
+                {comments.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              <Textarea
+                value={commentDraft}
+                onChange={(event) => {
+                  setCommentDraft(event.target.value);
+                  if (commentError) {
+                    setCommentError("");
+                  }
+                }}
+                rows={3}
+                className="min-h-[88px] resize-none"
+                placeholder="Add a comment"
+              />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-h-[1rem] font-body text-[11px] uppercase tracking-[0.12em] text-seal/72">
+                  {commentError}
+                </div>
+                <button
+                  type="button"
+                  className="w-full border border-border/28 bg-[hsl(var(--background)/0.42)] px-4 py-2.5 text-[11px] font-body uppercase tracking-[0.16em] text-foreground/72 transition-all duration-300 hover:border-border/46 hover:text-foreground disabled:cursor-not-allowed disabled:border-border/16 disabled:text-muted-foreground/34 sm:w-auto"
+                  disabled={isSubmittingComment || isThreadLoading}
+                  onClick={() => void handleCreateComment()}
+                >
+                  {isSubmittingComment ? "Posting..." : "Add Comment"}
+                </button>
+              </div>
+            </div>
+
+            {threadError && (
+              <p className="font-body text-[11px] uppercase tracking-[0.12em] text-seal/72">
+                {threadError}
+              </p>
+            )}
+
+            <div className="space-y-3">
+              {isThreadLoading ? (
+                <>
+                  <div className="h-[82px] animate-pulse border border-border/16 bg-background/36" />
+                  <div className="h-[82px] animate-pulse border border-border/16 bg-background/30" />
+                </>
+              ) : comments.length === 0 ? (
+                <div className="border border-dashed border-border/22 bg-background/22 px-4 py-4 text-center">
+                  <p className="font-body text-[13px] text-muted-foreground/64">
+                    No comments yet
+                  </p>
+                  <p className="mt-1.5 font-body text-[10px] uppercase tracking-[0.14em] text-muted-foreground/42">
+                    Keep collaboration here
+                  </p>
+                </div>
+              ) : (
+                comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="border border-border/18 bg-[hsl(var(--background)/0.46)] px-4 py-3.5 shadow-[inset_0_1px_0_hsl(var(--background)/0.62)]"
+                  >
+                    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="font-body text-[10px] uppercase tracking-[0.14em] text-foreground/60">
+                        {resolveMemberLabel(comment.authorUserId, currentUserId, memberLabels)}
+                      </p>
+                      <p className="font-body text-[10px] uppercase tracking-[0.12em] text-muted-foreground/42">
+                        {formatTimestamp(comment.createdAt)}
+                      </p>
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap break-words font-body text-[13px] leading-6 text-foreground/78">
+                      {comment.body}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
