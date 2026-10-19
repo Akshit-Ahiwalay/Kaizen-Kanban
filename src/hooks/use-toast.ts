@@ -1,3 +1,5 @@
+// Derived from shadcn/ui; upstream credits: Inspired by react-hot-toast library.
+// See THIRD_PARTY_NOTICES.md for the preserved upstream notices.
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";

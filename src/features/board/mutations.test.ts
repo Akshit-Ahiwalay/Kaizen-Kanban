@@ -60,12 +60,14 @@ describe("board mutations", () => {
       }),
     ).toBe(columns);
 
+    // A valid column ID can still be absent from the supplied board.
+    const columnsWithoutDone = columns.filter((column) => column.id !== "done");
     expect(
-      moveTask(columns, {
+      moveTask(columnsWithoutDone, {
         taskId: "1",
-        targetColumnId: "missing-column",
+        targetColumnId: "done",
       }),
-    ).toBe(columns);
+    ).toBe(columnsWithoutDone);
 
     expect(
       moveTask(columns, {

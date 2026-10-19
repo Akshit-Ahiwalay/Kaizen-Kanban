@@ -37,7 +37,7 @@ const DraggableTaskCard = ({
       index,
     },
   });
-  const { attributes, listeners, transform, transition, isDragging } = draggable;
+  const { attributes, listeners, transform, isDragging } = draggable;
 
   const setNodeRef = (node: HTMLDivElement | null) => {
     draggable.setNodeRef(node);
@@ -49,7 +49,6 @@ const DraggableTaskCard = ({
       ref={setNodeRef}
       style={{
         transform: CSS.Translate.toString(transform),
-        transition,
         opacity: isDragging ? 0.2 : 1,
       }}
       className={`touch-none ${droppable.isOver && !isDragging ? "ring-1 ring-border/20" : ""}`}

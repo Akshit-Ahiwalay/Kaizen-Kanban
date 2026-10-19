@@ -24,7 +24,7 @@ const TeamMembersDialog = ({
   onCreateMember,
 }: TeamMembersDialogProps) => {
   const [name, setName] = useState("");
-  const [color, setColor] = useState(DEFAULT_TEAM_MEMBER_COLOR);
+  const [color, setColor] = useState<(typeof TEAM_MEMBER_COLORS)[number]>(DEFAULT_TEAM_MEMBER_COLOR);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 

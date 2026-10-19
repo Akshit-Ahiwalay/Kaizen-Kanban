@@ -10,8 +10,12 @@ export type Json =
 
 export interface Database {
   public: {
+    // This hand-maintained client contract models direct table queries only.
+    // Empty relationship tuples omit typed joins; they do not assert that the
+    // database has no foreign keys. Generate full metadata once bootstrap exists.
     Tables: {
       tasks: {
+        Relationships: [];
         Row: {
           id: string;
           title: string;
@@ -53,6 +57,7 @@ export interface Database {
         };
       };
       task_comments: {
+        Relationships: [];
         Row: {
           id: string;
           task_id: string;
@@ -79,6 +84,7 @@ export interface Database {
         };
       };
       task_activity: {
+        Relationships: [];
         Row: {
           id: string;
           task_id: string;
@@ -123,6 +129,7 @@ export interface Database {
         };
       };
       profiles: {
+        Relationships: [];
         Row: {
           id: string;
           email: string | null;
@@ -146,6 +153,7 @@ export interface Database {
         };
       };
       team_members: {
+        Relationships: [];
         Row: {
           id: string;
           workspace_id: string | null;
@@ -172,6 +180,7 @@ export interface Database {
         };
       };
       workspace_members: {
+        Relationships: [];
         Row: {
           workspace_id: string;
           user_id: string;
@@ -189,6 +198,7 @@ export interface Database {
         };
       };
       workspace_invitations: {
+        Relationships: [];
         Row: {
           id: string;
           workspace_id: string;
@@ -227,6 +237,7 @@ export interface Database {
         };
       };
       workspaces: {
+        Relationships: [];
         Row: {
           id: string;
           name: string;
@@ -250,6 +261,7 @@ export interface Database {
         };
       };
     };
+    Views: Record<never, never>;
     Functions: {
       ensure_personal_workspace: {
         Args: Record<PropertyKey, never>;
